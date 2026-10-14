@@ -47,6 +47,7 @@ class ImportManager(
         settings.currency?.let { settingsRepository.setCurrency(it) }
         settings.weekStartMonday?.let { settingsRepository.setWeekStartMonday(it) }
         settings.themeMode?.let { settingsRepository.setThemeMode(ThemeMode.from(it)) }
+        settings.themeStyle?.let { settingsRepository.setThemeStyle(ThemeStyle.from(it)) }
         var note = ""
         settings.background?.let { spec ->
             val usable = when {

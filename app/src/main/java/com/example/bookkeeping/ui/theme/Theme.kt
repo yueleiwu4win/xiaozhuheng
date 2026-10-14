@@ -10,6 +10,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.example.bookkeeping.data.prefs.ThemeMode
+import com.example.bookkeeping.data.prefs.ThemeStyle
 
 /** 语义色：跨页面统一取用，明暗各一套（避免各页面各写一份魔法色）。 */
 @Immutable
@@ -35,7 +36,7 @@ private val DarkAppColors = AppColors(
 val LocalAppColors = staticCompositionLocalOf { LightAppColors }
 val LocalAppDark = staticCompositionLocalOf { false }
 
-private val LightColors = lightColorScheme(
+internal val ClassicLightColors = lightColorScheme(
     primary = Primary,
     onPrimary = OnPrimary,
     onPrimaryContainer = PrimaryDark,
@@ -59,7 +60,7 @@ private val LightColors = lightColorScheme(
     error = Danger
 )
 
-private val DarkColors = darkColorScheme(
+internal val ClassicDarkColors = darkColorScheme(
     primary = Color(0xFF6FC2B2),
     onPrimary = Color(0xFF08302A),
     primaryContainer = PrimaryDark,
@@ -95,16 +96,20 @@ fun ThemeMode.isDark(): Boolean = when (this) {
 @Composable
 fun BookkeepingTheme(
     themeMode: ThemeMode,
+    themeStyle: ThemeStyle = ThemeStyle.CLASSIC,
     content: @Composable () -> Unit
 ) {
     val dark = themeMode.isDark()
+    val definition = ThemeRegistry.resolve(themeStyle)
     CompositionLocalProvider(
         LocalAppColors provides if (dark) DarkAppColors else LightAppColors,
-        LocalAppDark provides dark
+        LocalAppDark provides dark,
+        LocalThemeTokens provides definition.tokens
     ) {
         MaterialTheme(
-            colorScheme = if (dark) DarkColors else LightColors,
-            typography = Typography,
+            colorScheme = if (dark) definition.dark else definition.light,
+            typography = definition.typography,
+            shapes = definition.shapes,
             content = content
         )
     }

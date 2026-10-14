@@ -1,5 +1,7 @@
 package com.example.bookkeeping.ui.nav
 
+import com.example.bookkeeping.ui.common.*
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
@@ -11,6 +13,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.example.bookkeeping.ui.common.themedIcon
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -152,7 +158,8 @@ private fun MainPageScaffold(
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                     text = { Text("记一笔") },
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = if (LocalThemeTokens.current.ledgerRows) RoundedCornerShape(LocalThemeTokens.current.actionCorner) else FloatingActionButtonDefaults.extendedFabShape
                 )
             }
         },
@@ -161,24 +168,45 @@ private fun MainPageScaffold(
                 NavigationBarItem(
                     selected = route == ROUTE_HOME,
                     onClick = { navigateTab(ROUTE_HOME, navController) },
-                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
-                    label = { Text("明细") }
+                    icon = { ThemeNavigationIcon(themedIcon(Icons.AutoMirrored.Filled.List, Icons.AutoMirrored.Outlined.List), route == ROUTE_HOME) },
+                    label = { Text("明细") },
+                    colors = themeNavigationColors()
                 )
                 NavigationBarItem(
                     selected = route == ROUTE_STATS,
                     onClick = { navigateTab(ROUTE_STATS, navController) },
-                    icon = { Icon(Icons.Filled.BarChart, contentDescription = null) },
-                    label = { Text("统计") }
+                    icon = { ThemeNavigationIcon(themedIcon(Icons.Filled.BarChart, Icons.Outlined.BarChart), route == ROUTE_STATS) },
+                    label = { Text("统计") },
+                    colors = themeNavigationColors()
                 )
                 NavigationBarItem(
                     selected = route == ROUTE_ME,
                     onClick = { navigateTab(ROUTE_ME, navController) },
-                    icon = { Icon(Icons.Filled.Settings, contentDescription = null) },
-                    label = { Text("设置") }
+                    icon = { ThemeNavigationIcon(themedIcon(Icons.Filled.Settings, Icons.Outlined.Settings), route == ROUTE_ME) },
+                    label = { Text("设置") },
+                    colors = themeNavigationColors()
                 )
             }
         }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) { content() }
+    }
+}
+
+@Composable
+private fun themeNavigationColors() = if (LocalThemeTokens.current.ledgerRows)
+    NavigationBarItemDefaults.colors(
+        selectedIconColor = MaterialTheme.colorScheme.primary,
+        selectedTextColor = MaterialTheme.colorScheme.primary,
+        indicatorColor = Color.Transparent
+    ) else NavigationBarItemDefaults.colors()
+
+@Composable
+private fun ThemeNavigationIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, selected: Boolean) {
+    if (!LocalThemeTokens.current.ledgerRows) Icon(icon, contentDescription = null)
+    else Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(icon, contentDescription = null)
+        Spacer(Modifier.height(4.dp))
+        HorizontalDivider(Modifier.width(16.dp), thickness = 2.dp, color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
     }
 }

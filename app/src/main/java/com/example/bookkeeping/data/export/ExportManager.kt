@@ -223,12 +223,7 @@ class ExportManager(private val context: Context) {
             .put("formatVersion", 2)
             .put("app", "bookkeeping-android")
             .put("exportedAt", Date().time)
-            .put("settings", JSONObject()
-                .put("currency", settings.currency)
-                .put("weekStartMonday", settings.weekStartMonday)
-                .put("themeMode", settings.themeMode.value)
-                .put("background", settings.background)
-            )
+            .put("settings", settings.toBackupJson())
             .put("categories", catArr)
             .put("bills", billArr)
             .put(

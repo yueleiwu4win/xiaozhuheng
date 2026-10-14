@@ -42,6 +42,7 @@ data class AppSettings(
     /** 周起始日是否为周一（预留给周维度统计） */
     val weekStartMonday: Boolean = true,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val themeStyle: ThemeStyle = ThemeStyle.CLASSIC,
     /**
      * 背景设置：
      * - "default" 跟随主题底色
@@ -77,6 +78,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
                         currency = p[KEY_CURRENCY] ?: "CNY",
                         weekStartMonday = p[KEY_WEEK] ?: true,
                         themeMode = ThemeMode.from(p[KEY_THEME]),
+                        themeStyle = ThemeStyle.from(p[KEY_STYLE]),
                         background = p[KEY_BG] ?: BACKGROUND_SPEC_DEFAULT
                     )
                     _lastUsed.value = LastUsed(p[KEY_LAST_CATEGORY], p[KEY_LAST_DATE])
@@ -110,6 +112,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         context.dataStore.edit { it[KEY_THEME] = mode.value }
     }
 
+    suspend fun setThemeStyle(style: ThemeStyle) {
+        context.dataStore.edit { it[KEY_STYLE] = style.value }
+    }
+
     suspend fun setBackground(spec: String) {
         context.dataStore.edit { it[KEY_BG] = spec }
     }
@@ -126,6 +132,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val KEY_CURRENCY = stringPreferencesKey("currency")
         val KEY_WEEK = booleanPreferencesKey("week_start_monday")
         val KEY_THEME = stringPreferencesKey("theme_mode")
+        val KEY_STYLE = stringPreferencesKey("theme_style")
         val KEY_BG = stringPreferencesKey("background_spec")
         val KEY_LAST_CATEGORY = longPreferencesKey("last_category_id")
         val KEY_LAST_DATE = stringPreferencesKey("last_date")

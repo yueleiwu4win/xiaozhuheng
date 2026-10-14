@@ -30,6 +30,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookkeeping.util.AmountFormatter
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.floor
@@ -372,13 +373,13 @@ fun RankBar(
     val f = fraction.coerceIn(0f, 1f)
     Box(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(LocalThemeTokens.current.rankCorner))
     ) {
         Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(f)
-                .background(color, RoundedCornerShape(4.dp))
+                .background(color, RoundedCornerShape(LocalThemeTokens.current.rankCorner))
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.example.bookkeeping.ui.stats
 
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -84,8 +85,8 @@ fun StatsScreen(
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             Row(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selection.type == BillType.EXPENSE, onClick = { viewModel.setType(BillType.EXPENSE) }, label = { Text("支出") })
-                FilterChip(selection.type == BillType.INCOME, onClick = { viewModel.setType(BillType.INCOME) }, label = { Text("收入") })
+                AppFilterChip(selection.type == BillType.EXPENSE, onClick = { viewModel.setType(BillType.EXPENSE) }, label = { Text("支出") })
+                AppFilterChip(selection.type == BillType.INCOME, onClick = { viewModel.setType(BillType.INCOME) }, label = { Text("收入") })
             }
             if (annualVisible) {
                 TabRow(annualTab, containerColor = MaterialTheme.colorScheme.surface) {
@@ -104,7 +105,7 @@ fun StatsScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     item {
-                        Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface) {
+                        Surface(shape = RoundedCornerShape(LocalThemeTokens.current.sectionCorner), color = MaterialTheme.colorScheme.surface) {
                             Column(Modifier.padding(12.dp)) {
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                     IconButton(onClick = { if (annualVisible) viewModel.prevYear() else viewModel.prevMonth() }) {
@@ -128,7 +129,7 @@ fun StatsScreen(
                         item {
                             SectionCard("当月${label}") {
                                 Text(AmountFormatter.withSymbol(monthData.total, currency),
-                                    style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = AmountFontFeatures), color = accent)
+                                    style = MaterialTheme.typography.displayMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures), color = accent)
                                 Text("较上月 ${percentChange(monthData.total, monthData.previous) ?: "暂无可比数据"}",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 Text("${monthData.count} 笔记录", style = MaterialTheme.typography.bodyMedium)
@@ -170,7 +171,7 @@ fun StatsScreen(
                         item {
                             SectionCard("${selection.year}年${label}") {
                                 Text(AmountFormatter.withSymbol(total, currency),
-                                    style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = AmountFontFeatures), color = accent)
+                                    style = MaterialTheme.typography.headlineMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures), color = accent)
                                 val prev = yearData.years.firstOrNull { it.label == selection.year - 1 }?.totalCents ?: 0L
                                 Text("较上一年 ${percentChange(total, prev) ?: "暂无可比数据"}",
                                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -184,8 +185,8 @@ fun StatsScreen(
                                 val points = yearData.months.map { ChartPoint("${it.label}月", it.totalCents) }
                                 SectionCard("每月${label}") {
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        FilterChip(chartStyle == 0, onClick = { chartStyle = 0 }, label = { Text("折线") })
-                                        FilterChip(chartStyle == 1, onClick = { chartStyle = 1 }, label = { Text("柱状") })
+                                        AppFilterChip(chartStyle == 0, onClick = { chartStyle = 0 }, label = { Text("折线") })
+                                        AppFilterChip(chartStyle == 1, onClick = { chartStyle = 1 }, label = { Text("柱状") })
                                     }
                                     if (count == 0) EmptyState("该年暂无${label}记录")
                                     else if (chartStyle == 0) {
@@ -224,7 +225,7 @@ fun StatsScreen(
                                 SectionCard("年度月均") {
                                     val months = if (selection.year == YearMonth.now().year) YearMonth.now().monthValue else 12
                                     Text(AmountFormatter.withSymbol(total / months, currency),
-                                        style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = AmountFontFeatures))
+                                        style = MaterialTheme.typography.headlineMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures))
                                 }
                             }
                         } else {
@@ -235,7 +236,7 @@ fun StatsScreen(
                                     val top = rows.groupBy { it.categoryId }.values.sortedByDescending { list -> list.sumOf { it.totalCents } }.take(5)
                                     val series = top.map { list ->
                                         val first = list.first()
-                                        ChartSeries(first.name, first.color.hexToColor(),
+                                        ChartSeries(first.name, themeCategoryColor(first.color.hexToColor()),
                                             allYears.map { y -> ChartPoint("$y", list.firstOrNull { it.year == y }?.totalCents ?: 0L) })
                                     }
                                     if (series.isEmpty()) EmptyState("暂无分类记录")
@@ -266,7 +267,7 @@ private fun CategoryComposition(categories: List<CategoryTotal>, currency: Strin
             val total = categories.sumOf { it.totalCents }.coerceAtLeast(1L)
             val top = categories.take(6)
             val rest = categories.drop(6).sumOf { it.totalCents }
-            val slices = top.map { DonutSlice(it.name, it.totalCents, it.color.hexToColor()) } +
+            val slices = top.map { DonutSlice(it.name, it.totalCents, themeCategoryColor(it.color.hexToColor())) } +
                 if (rest > 0L) listOf(DonutSlice("其他", rest, LocalAppColors.current.chartOther)) else emptyList()
             DonutChart(
                 slices, Modifier.fillMaxWidth().height(180.dp),
@@ -279,14 +280,14 @@ private fun CategoryComposition(categories: List<CategoryTotal>, currency: Strin
                     Modifier.fillMaxWidth().clickable(onClickLabel = "查看${c.name}账单") { onCategory(c.categoryId) }.padding(vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    CategoryIconBox(CategoryIcons.byKey(c.icon), c.color.hexToColor(), size = 36.dp)
+                    CategoryIconBox(categoryIcon(c.icon), themeCategoryColor(c.color.hexToColor()), size = 36.dp)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(c.name, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
                         Text("${String.format(Locale.CHINA, "%.1f", c.totalCents * 100.0 / total)}% · ${c.cnt} 笔",
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text(AmountFormatter.withSymbol(c.totalCents, currency),
-                        style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = AmountFontFeatures))
+                        style = MaterialTheme.typography.titleSmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures))
                     Icon(Icons.Filled.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }

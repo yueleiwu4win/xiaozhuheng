@@ -1,5 +1,6 @@
 package com.example.bookkeeping.ui.common
 
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,8 +56,8 @@ fun SectionCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(LocalThemeTokens.current.sectionCorner),
+        colors = CardDefaults.cardColors(containerColor = if (LocalThemeTokens.current.groupedSections) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -65,7 +66,7 @@ fun SectionCard(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
+                style = if (LocalThemeTokens.current.groupedSections) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             content()
@@ -112,7 +113,7 @@ fun MetricCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(LocalThemeTokens.current.metricCorner),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
@@ -127,7 +128,7 @@ fun MetricCard(
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum")
+                style = MaterialTheme.typography.titleMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = "tnum")
             )
             if (sub != null) {
                 Text(
@@ -153,14 +154,14 @@ fun CategoryIconBox(
     Box(
         modifier = modifier
             .size(size)
-            .background(color.copy(alpha = 0.14f), RoundedCornerShape(corner)),
+            .background(if (LocalThemeTokens.current.mutedCategoryIcons) MaterialTheme.colorScheme.primaryContainer else color.copy(alpha = 0.14f), RoundedCornerShape(if (LocalThemeTokens.current.mutedCategoryIcons) size / 2 else corner)),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.padding(iconPadding),
-            tint = color
+            tint = themeCategoryColor(color)
         )
     }
 }
@@ -304,7 +305,7 @@ fun MonthPickerDialog(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(RoundedCornerShape(LocalThemeTokens.current.pickerCorner))
                                     .background(
                                         if (selected) MaterialTheme.colorScheme.primaryContainer
                                         else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)

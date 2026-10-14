@@ -7,6 +7,8 @@
 
 当前基础版本为 **1.0**（versionCode 3），以 Git 标签 `v1.0` 固定保存。后续体验优化可以从此版本继续开发；版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
+当前 feature 分支提供 **1.1 主题体验版**：设置 → 外观 → 界面风格，可切换经典与宋式书账；明暗模式和背景分别设置。开发与扩展说明见 [主题系统与扩展说明](docs/主题系统与扩展说明.md)。
+
 ## 功能（V1.0）
 
 - **启动**：使用用户提供的汉服女子算盘图片作为桌面、安装和启动图标；只显示一个图标启动窗口，必要数据就绪后直接进入首页，取消后续全屏封面；分类持续缓存，新记账同步显示分类与默认选中项。
@@ -82,13 +84,13 @@ gradlew.bat :app:assembleDebug
 
 产物：`app\build\outputs\apk\debug\app-debug.apk`
 
-打包当前 1.0 体验版：
+打包当前体验版：
 
 ```bat
 gradlew.bat :app:packageXiaozhuheng
 ```
 
-产物：`app\build\outputs\distribution\xiaozhuheng-v1.0.apk`。`preview` 使用非调试运行模式，沿用本机 debug 签名；其他电脑生成的 debug 签名不同，不能直接覆盖原安装包。签名文件不提交到仓库。
+产物：`app\build\outputs\distribution\xiaozhuheng-v1.1.apk`。`preview` 使用非调试运行模式，沿用本机 debug 签名；其他电脑生成的 debug 签名不同，不能直接覆盖原安装包。签名文件不提交到仓库。
 
 验证代码：
 

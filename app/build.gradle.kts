@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.bookkeeping"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.0"
+        versionCode = 4
+        versionName = "1.1"
     }
 
     buildTypes {
@@ -54,7 +54,7 @@ tasks.register<Copy>("packageXiaozhuheng") {
     dependsOn("assemblePreview")
     from(layout.buildDirectory.file("outputs/apk/preview/app-preview.apk"))
     into(layout.buildDirectory.dir("outputs/distribution"))
-    rename { "xiaozhuheng-v1.0.apk" }
+    rename { "xiaozhuheng-v${android.defaultConfig.versionName}.apk" }
 }
 
 kapt {

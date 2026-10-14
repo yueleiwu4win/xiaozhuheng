@@ -1,5 +1,6 @@
 package com.example.bookkeeping.ui.category
 
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -106,8 +108,8 @@ fun CategoryScreen(
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             Row(Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(type == BillType.EXPENSE, onClick = { type = BillType.EXPENSE }, enabled = !busy && draggedId == null, label = { Text("支出") })
-                FilterChip(type == BillType.INCOME, onClick = { type = BillType.INCOME }, enabled = !busy && draggedId == null, label = { Text("收入") })
+                AppFilterChip(type == BillType.EXPENSE, onClick = { type = BillType.EXPENSE }, enabled = !busy && draggedId == null, label = { Text("支出") })
+                AppFilterChip(type == BillType.INCOME, onClick = { type = BillType.INCOME }, enabled = !busy && draggedId == null, label = { Text("收入") })
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             LazyColumn(
@@ -150,7 +152,7 @@ fun CategoryScreen(
                                         onDragCancel = { draggedId = null; order = active.map { it.id } }
                                     )
                                 }, contentAlignment = Alignment.Center
-                            ) { Icon(Icons.Filled.DragHandle, "长按拖动排序${c.name}", Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                            ) { Icon(themedIcon(Icons.Filled.DragHandle, Icons.Outlined.DragHandle), "长按拖动排序${c.name}", Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                         }
                     )
                 }
@@ -158,7 +160,7 @@ fun CategoryScreen(
                 if (archived.isNotEmpty()) {
                     item(key = "archived") {
                         TextButton(onClick = { archivedVisible = !archivedVisible }, enabled = !busy && draggedId == null) {
-                            Icon(if (archivedVisible) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, null)
+                            Icon(if (archivedVisible) themedIcon(Icons.Filled.ExpandLess, Icons.Outlined.ExpandLess) else themedIcon(Icons.Filled.ExpandMore, Icons.Outlined.ExpandMore), null)
                             Text("已归档 · ${archived.size} 个")
                         }
                     }
@@ -205,17 +207,17 @@ private fun CategoryRow(
     dragHandle: (@Composable () -> Unit)? = null
 ) {
     var menu by remember { mutableStateOf(false) }
-    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
-        Row(Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onEdit).padding(start = 14.dp, top = 10.dp, bottom = 10.dp),
+    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(LocalThemeTokens.current.rowCorner), color = MaterialTheme.colorScheme.surface) {
+        Row(Modifier.fillMaxWidth().ledgerDivider().clickable(enabled = enabled, onClick = onEdit).padding(start = 14.dp, top = 10.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            CategoryIconBox(CategoryIcons.byKey(category.icon), category.color.hexToColor())
+            CategoryIconBox(categoryIcon(category.icon), category.color.hexToColor())
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(category.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text("${if (category.isPreset) "内置 · " else ""}$billCount 笔", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Box {
-                IconButton(onClick = { menu = true }, enabled = enabled) { Icon(Icons.Filled.MoreVert, "更多操作：${category.name}") }
+                IconButton(onClick = { menu = true }, enabled = enabled) { Icon(themedIcon(Icons.Filled.MoreVert, Icons.Outlined.MoreVert), "更多操作：${category.name}") }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     DropdownMenuItem(text = { Text("编辑") }, onClick = { menu = false; onEdit() })
                     if (onMove != null) {
@@ -277,7 +279,7 @@ private fun CategoryEditDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(LocalThemeTokens.current.pickerCorner))
                                 .background(
                                     if (icon == opt.key) color.hexToColor().copy(alpha = 0.2f)
                                     else Color.Transparent
@@ -287,7 +289,7 @@ private fun CategoryEditDialog(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = opt.icon,
+                                imageVector = categoryIcon(opt.key),
                                 contentDescription = opt.label,
                                 modifier = Modifier.size(22.dp),
                                 tint = if (icon == opt.key) color.hexToColor()
@@ -312,7 +314,7 @@ private fun CategoryEditDialog(
                         ) {
                             if (color == c) {
                                 Icon(
-                                    Icons.Filled.Check,
+                                    themedIcon(Icons.Filled.Check, Icons.Outlined.Check),
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
                                     tint = Color.White

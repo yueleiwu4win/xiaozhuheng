@@ -1,5 +1,7 @@
 package com.example.bookkeeping.ui.edit
 
+import com.example.bookkeeping.ui.common.*
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
@@ -9,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Backspace
@@ -180,7 +183,7 @@ fun EditScreen(
                     supportingText = { Text("${noteDraft.length}/50") },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { confirmNote() }),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(LocalThemeTokens.current.categoryCorner)
                 )
             },
             confirmButton = { TextButton(onClick = confirmNote) { Text("完成") } },
@@ -189,12 +192,12 @@ fun EditScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = if (LocalThemeTokens.current.ledgerRows) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.surface,
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text(if (viewModel.isEdit) "编辑记录" else "记一笔") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = if (LocalThemeTokens.current.ledgerRows) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.surface),
                 navigationIcon = {
                     IconButton(onClick = requestBack, enabled = !saving && !deleting) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -202,7 +205,7 @@ fun EditScreen(
                 },
                 actions = {
                     if (viewModel.isEdit) IconButton(onClick = { if (!leaving) showDelete = true }, enabled = enabled) {
-                        Icon(Icons.Filled.DeleteOutline, contentDescription = "删除这笔记录", tint = MaterialTheme.colorScheme.error)
+                        Icon(themedIcon(Icons.Filled.DeleteOutline, Icons.Outlined.DeleteOutline), contentDescription = "删除这笔记录", tint = MaterialTheme.colorScheme.error)
                     }
                 }
             )
@@ -223,10 +226,10 @@ fun EditScreen(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(BillType.EXPENSE to "支出", BillType.INCOME to "收入").forEach { (type, label) ->
-                        FilterChip(
+                        AppFilterChip(
                             selected = billType == type, onClick = { if (!leaving) viewModel.selectType(type) },
                             enabled = enabled, label = { Text(label, style = MaterialTheme.typography.titleSmall) },
-                            leadingIcon = if (billType == type) ({ Icon(Icons.Filled.Check, null, Modifier.size(18.dp)) }) else null
+                            leadingIcon = if (billType == type) ({ Icon(themedIcon(Icons.Filled.Check, Icons.Outlined.Check), null, Modifier.size(18.dp)) }) else null
                         )
                     }
                 }
@@ -284,11 +287,11 @@ fun EditScreen(
 private fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val color = category.color.hexToColor()
     val background by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        if (selected) MaterialTheme.colorScheme.primaryContainer else if (LocalThemeTokens.current.ledgerRows) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface,
         label = "categorySelection"
     )
     Surface(
-        onClick = onClick, enabled = enabled, shape = RoundedCornerShape(16.dp), color = background,
+        onClick = onClick, enabled = enabled, shape = RoundedCornerShape(LocalThemeTokens.current.categoryCorner), color = background,
         modifier = Modifier.semantics { this.selected = selected },
         border = if (selected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
     ) {
@@ -296,7 +299,7 @@ private fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: B
             Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(CategoryIcons.byKey(category.icon), null, Modifier.size(26.dp), tint = if (selected) MaterialTheme.colorScheme.primary else color)
+            Icon(categoryIcon(category.icon), null, Modifier.size(26.dp), tint = if (selected) MaterialTheme.colorScheme.primary else themeCategoryColor(color))
             Text(
                 if (category.isArchived) "${category.name}·归档" else category.name,
                 style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -341,12 +344,12 @@ private fun AmountKeyboard(
                             when (key) { "." -> onDot(); "back" -> onBackspace(); else -> onDigit(key[0]) }
                         },
                         enabled = enabled, modifier = Modifier.weight(1f).heightIn(min = 52.dp).fillMaxHeight(),
-                        color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(LocalThemeTokens.current.keyCorner),
                         contentColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     ) {
                         Box(Modifier.padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
                             if (key == "back") Icon(Icons.AutoMirrored.Filled.Backspace, "退格，删除最后一位", Modifier.size(24.dp))
-                            else Text(key, style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = AmountFontFeatures))
+                            else Text(key, style = MaterialTheme.typography.headlineMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures))
                         }
                     }
                 }
@@ -376,7 +379,7 @@ private fun AmountKeyboard(
                     color = if (primary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = (if (primary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer)
                         .copy(alpha = if (enabled) 1f else 0.38f),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(LocalThemeTokens.current.keyCorner)
                 ) {
                     Column(
                         Modifier.padding(horizontal = 2.dp, vertical = 6.dp),

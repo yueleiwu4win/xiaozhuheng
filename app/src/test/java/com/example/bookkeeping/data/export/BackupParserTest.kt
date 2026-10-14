@@ -6,6 +6,19 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BackupParserTest {
+    @Test fun newThemeSettingSurvivesBackupParsingWithoutChangingBills() {
+        val root = backup().put("settings", JSONObject().put("themeStyle", "song").put("themeMode", "dark"))
+        val parsed = BackupParser.parse(root.toString())
+        assertEquals("song", parsed.settings?.themeStyle)
+        assertEquals("dark", parsed.settings?.themeMode)
+        assertEquals(1234L, parsed.bills.single().amountCents)
+    }
+
+    @Test fun oldBackupDoesNotOverwriteStyleWithMissingField() {
+        val root = backup().put("settings", JSONObject().put("themeMode", "light"))
+        assertNull(BackupParser.parse(root.toString()).settings?.themeStyle)
+    }
+
     private fun category(id: Long = 1L, type: String = "expense") = JSONObject()
         .put("id", id).put("name", "餐饮").put("type", type).put("icon", "wallet").put("color", "#214F43")
     private fun bill(id: Long? = 1L, type: String = "expense", categoryId: Long = 1L) = JSONObject()

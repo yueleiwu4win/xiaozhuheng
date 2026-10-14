@@ -1,5 +1,6 @@
 package com.example.bookkeeping.ui.common
 
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -19,6 +20,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_CUSTOM_IMAGE
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_DEFAULT
 import kotlinx.coroutines.Dispatchers
@@ -74,6 +77,13 @@ fun AppBackground(modifier: Modifier = Modifier) {
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
                 )
+                LocalThemeTokens.current.ornament?.let { resource ->
+                    Image(
+                        painterResource(resource), contentDescription = null,
+                        modifier = Modifier.fillMaxSize(), contentScale = ContentScale.FillWidth,
+                        alignment = androidx.compose.ui.Alignment.TopEnd, alpha = if (isDark) 0.08f else 0.16f
+                    )
+                }
             }
 
             spec.startsWith("gradient:") -> {

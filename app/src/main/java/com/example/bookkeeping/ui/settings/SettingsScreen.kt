@@ -8,6 +8,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -79,7 +80,7 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
     }
     val themeLabel = when (settings.themeMode) { ThemeMode.SYSTEM -> "跟随系统"; ThemeMode.LIGHT -> "浅色"; ThemeMode.DARK -> "深色" }
     val backgroundLabel = when (settings.background) {
-        BACKGROUND_SPEC_DEFAULT -> "暖白墨绿"
+        BACKGROUND_SPEC_DEFAULT -> "主题默认"
         BACKGROUND_SPEC_CUSTOM_IMAGE -> "相册图片"
         else -> BackgroundPresets.firstOrNull { it.spec() == settings.background }?.label ?: "自定义"
     }
@@ -92,33 +93,34 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
             ) {
                 item {
                     SectionCard("外观") {
-                        SettingRow("主题", Icons.Filled.Palette, value = themeLabel, enabled = !busy) { panel = "theme" }
-                        SettingRow("背景", Icons.Filled.Image, value = backgroundLabel, enabled = !busy) { panel = "background" }
-                        SettingRow("显示币种", Icons.Filled.Payments, value = CURRENCIES[settings.currency] ?: settings.currency, enabled = !busy) { panel = "currency" }
+                        SettingRow("界面风格", themedIcon(Icons.Filled.Palette, Icons.Outlined.Palette), value = settings.themeStyle.label, enabled = !busy) { panel = "style" }
+                        SettingRow("明暗模式", themedIcon(Icons.Filled.Palette, Icons.Outlined.Palette), value = themeLabel, enabled = !busy) { panel = "theme" }
+                        SettingRow("背景", themedIcon(Icons.Filled.Image, Icons.Outlined.Image), value = backgroundLabel, enabled = !busy) { panel = "background" }
+                        SettingRow("显示币种", themedIcon(Icons.Filled.Payments, Icons.Outlined.Payments), value = CURRENCIES[settings.currency] ?: settings.currency, enabled = !busy) { panel = "currency" }
                     }
                 }
                 item {
                     SectionCard("分类") {
-                        SettingRow("分类管理", Icons.Filled.Category, subtitle = "收入与支出分类、排序、归档", enabled = !busy, onClick = onOpenCategories)
+                        SettingRow("分类管理", themedIcon(Icons.Filled.Category, Icons.Outlined.Category), subtitle = "收入与支出分类、排序、归档", enabled = !busy, onClick = onOpenCategories)
                     }
                 }
                 item {
                     SectionCard("数据 · $billCount 笔账单") {
-                        SettingRow("备份数据", Icons.Filled.SaveAlt, subtitle = "保存账单、分类和设置，便于换机恢复", enabled = !busy) { panel = "backup" }
-                        SettingRow("恢复备份", Icons.Filled.Restore, subtitle = "先查看备份摘要，再确认恢复", enabled = !busy) {
+                        SettingRow("备份数据", themedIcon(Icons.Filled.SaveAlt, Icons.Outlined.SaveAlt), subtitle = "保存账单、分类和设置，便于换机恢复", enabled = !busy) { panel = "backup" }
+                        SettingRow("恢复备份", themedIcon(Icons.Filled.Restore, Icons.Outlined.Restore), subtitle = "先查看备份摘要，再确认恢复", enabled = !busy) {
                             importLauncher.launch(arrayOf("application/json", "application/octet-stream", "text/*", "*/*"))
                         }
-                        SettingRow("导出表格", Icons.Filled.TableChart, subtitle = "用于 Excel 查看与分析", enabled = !busy) { panel = "csv" }
+                        SettingRow("导出表格", themedIcon(Icons.Filled.TableChart, Icons.Outlined.TableChart), subtitle = "用于 Excel 查看与分析", enabled = !busy) { panel = "csv" }
                     }
                 }
                 item {
                     SectionCard("存储") {
-                        SettingRow("清理缓存", Icons.Filled.CleaningServices, subtitle = "账单与分类保留", value = formatSize(cacheSize), enabled = !busy) { cleanVisible = true }
+                        SettingRow("清理缓存", themedIcon(Icons.Filled.CleaningServices, Icons.Outlined.CleaningServices), subtitle = "账单与分类保留", value = formatSize(cacheSize), enabled = !busy) { cleanVisible = true }
                     }
                 }
                 item {
                     SectionCard("高级") {
-                        SettingRow("清空所有数据", Icons.Filled.DeleteOutline, subtitle = "删除全部账单，恢复内置分类",
+                        SettingRow("清空所有数据", themedIcon(Icons.Filled.DeleteOutline, Icons.Outlined.DeleteOutline), subtitle = "删除全部账单，恢复内置分类",
                             enabled = !busy, danger = true) { clearVisible = true }
                     }
                 }
@@ -133,15 +135,21 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
         ModalBottomSheet(onDismissRequest = { panel = null }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(when (current) { "theme" -> "主题"; "background" -> "背景"; "currency" -> "显示币种"; "backup" -> "备份数据"; else -> "导出表格" },
+                Text(when (current) { "style" -> "界面风格"; "theme" -> "明暗模式"; "background" -> "背景"; "currency" -> "显示币种"; "backup" -> "备份数据"; else -> "导出表格" },
                     style = MaterialTheme.typography.titleLarge)
                 when (current) {
+                    "style" -> {
+                        Text("选择整套页面、按钮和图标的风格，明暗模式与背景可分别设置。", style = MaterialTheme.typography.bodyMedium)
+                        ThemeStyle.entries.forEach { style ->
+                            ChoiceRow("${style.label} · ${style.description}", style == settings.themeStyle, enabled = !busy) { viewModel.setThemeStyle(style); panel = null }
+                        }
+                    }
                     "theme" -> ThemeMode.entries.forEach { mode ->
                         val label = when (mode) { ThemeMode.SYSTEM -> "跟随系统"; ThemeMode.LIGHT -> "浅色"; ThemeMode.DARK -> "深色" }
                         ChoiceRow(label, mode == settings.themeMode, enabled = !busy) { viewModel.setThemeMode(mode); panel = null }
                     }
                     "background" -> {
-                        ChoiceRow("默认 · 暖白墨绿", settings.background == BACKGROUND_SPEC_DEFAULT, !busy) { viewModel.setBackgroundPreset("default"); panel = null }
+                        ChoiceRow("主题默认", settings.background == BACKGROUND_SPEC_DEFAULT, !busy) { viewModel.setBackgroundPreset("default"); panel = null }
                         BackgroundPresets.forEach { preset ->
                             ChoiceRow(preset.label, settings.background == preset.spec(), !busy) { viewModel.setBackgroundPreset(preset.key); panel = null }
                         }
@@ -157,12 +165,12 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
                         val kind = if (current == "backup") ExportManager.Kind.JSON else ExportManager.Kind.CSV
                         Text(if (kind == ExportManager.Kind.JSON) "备份包含账单、分类和设置；相册背景图片不包含在文件中。" else "表格文件可用 Excel 打开，用于查看和分析。",
                             style = MaterialTheme.typography.bodyMedium)
-                        Button(onClick = {
+                        AppButton(onClick = {
                             panel = null
                             if (kind == ExportManager.Kind.JSON) jsonLauncher.launch(viewModel.defaultName(kind))
                             else csvLauncher.launch(viewModel.defaultName(kind))
                         }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("保存到文件") }
-                        OutlinedButton(onClick = { panel = null; share(kind) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("通过系统分享") }
+                        AppOutlinedButton(onClick = { panel = null; share(kind) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("通过系统分享") }
                     }
                 }
             }
@@ -187,7 +195,7 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
                         else "恢复会替换当前全部 $billCount 笔账单和分类。建议先备份当前数据。",
                         color = MaterialTheme.colorScheme.error
                     )
-                    OutlinedButton(onClick = { jsonLauncher.launch(viewModel.defaultName(ExportManager.Kind.JSON)) }, enabled = !busy,
+                    AppOutlinedButton(onClick = { jsonLauncher.launch(viewModel.defaultName(ExportManager.Kind.JSON)) }, enabled = !busy,
                         modifier = Modifier.fillMaxWidth()) { Text("先备份当前数据") }
                     result?.let { Text(it.message, color = if (it.ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error) }
                     if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -224,7 +232,7 @@ private fun SettingRow(
         }
         value?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.widthIn(max = 110.dp), maxLines = 2, overflow = TextOverflow.Ellipsis) }
-        Icon(Icons.Filled.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(themedIcon(Icons.Filled.ChevronRight, Icons.Outlined.ChevronRight), null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -232,7 +240,7 @@ private fun SettingRow(
 private fun ChoiceRow(title: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick).padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        if (selected) Icon(Icons.Filled.Check, null, tint = MaterialTheme.colorScheme.primary)
+        if (selected) Icon(themedIcon(Icons.Filled.Check, Icons.Outlined.Check), null, tint = MaterialTheme.colorScheme.primary)
     }
 }
 

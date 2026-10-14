@@ -9,7 +9,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
 
-data class BackupSettings(val currency: String?, val weekStartMonday: Boolean?, val themeMode: String?, val background: String?)
+data class BackupSettings(val currency: String?, val weekStartMonday: Boolean?, val themeMode: String?, val background: String?, val themeStyle: String? = null)
 
 data class PreparedBackup(
     val fileName: String, val version: Int, val exportedAt: Long?,
@@ -88,7 +88,8 @@ object BackupParser {
                 it.optString("currency").trim().takeIf { c -> c.isNotEmpty() && c.length <= 8 },
                 if (it.has("weekStartMonday")) it.optBoolean("weekStartMonday", true) else null,
                 if (it.has("themeMode")) it.optString("themeMode") else null,
-                if (it.has("background")) it.optString("background") else null
+                if (it.has("background")) it.optString("background") else null,
+                if (it.has("themeStyle")) it.optString("themeStyle") else null
             )
         }
         return PreparedBackup(fileName, version, root.optLong("exportedAt", 0).takeIf { it > 0 },

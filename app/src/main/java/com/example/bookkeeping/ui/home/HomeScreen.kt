@@ -1,5 +1,6 @@
 package com.example.bookkeeping.ui.home
 
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
@@ -89,7 +91,7 @@ fun HomeScreen(
         )
     }
     if (filtersVisible) {
-        ModalBottomSheet(onDismissRequest = { filtersVisible = false }, containerColor = MaterialTheme.colorScheme.surface) {
+        ModalBottomSheet(onDismissRequest = { filtersVisible = false }, containerColor = if (LocalThemeTokens.current.ledgerRows) Color.Transparent else MaterialTheme.colorScheme.surface) {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 28.dp),
@@ -110,24 +112,24 @@ fun HomeScreen(
                 item {
                     Text("分类", style = MaterialTheme.typography.titleSmall)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(
+                        AppFilterChip(
                             selected = filter.categoryId == null,
                             onClick = { viewModel.setCategoryFilter(null) }, label = { Text("全部分类") }
                         )
                         categories.filter { filter.type == null || it.type == filter.type }.forEach { c ->
-                            FilterChip(
+                            AppFilterChip(
                                 selected = filter.categoryId == c.id,
                                 onClick = { viewModel.setCategoryFilter(if (filter.categoryId == c.id) null else c.id) },
                                 label = { Text(c.name) },
                                 leadingIcon = {
-                                    Icon(CategoryIcons.byKey(c.icon), null, Modifier.size(18.dp), tint = c.color.hexToColor())
+                                    Icon(categoryIcon(c.icon), null, Modifier.size(18.dp), tint = c.color.hexToColor())
                                 }
                             )
                         }
                     }
                 }
                 item {
-                    Button(onClick = { filtersVisible = false }, modifier = Modifier.fillMaxWidth()) { Text("查看结果") }
+                    AppButton(onClick = { filtersVisible = false }, modifier = Modifier.fillMaxWidth()) { Text("查看结果") }
                 }
             }
         }
@@ -151,11 +153,11 @@ fun HomeScreen(
                 if (searchVisible) viewModel.setKeyword("")
                 searchVisible = !searchVisible
             }) {
-                Icon(if (searchVisible) Icons.Filled.Close else Icons.Filled.Search,
+                Icon(if (searchVisible) themedIcon(Icons.Filled.Close, Icons.Outlined.Close) else themedIcon(Icons.Filled.Search, Icons.Outlined.Search),
                     contentDescription = if (searchVisible) "关闭搜索" else "搜索备注")
             }
             IconButton(onClick = { focusManager.clearFocus(); filtersVisible = true }) {
-                Icon(Icons.Filled.FilterList, contentDescription = "筛选记录",
+                Icon(themedIcon(Icons.Filled.FilterList, Icons.Outlined.FilterList), contentDescription = "筛选记录",
                     tint = if (filter.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -164,13 +166,13 @@ fun HomeScreen(
                 value = filter.keyword, onValueChange = viewModel::setKeyword,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).focusRequester(searchFocus),
                 placeholder = { Text("搜索本月备注") }, singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(LocalThemeTokens.current.rowCorner),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                leadingIcon = { Icon(Icons.Filled.Search, null) },
+                leadingIcon = { Icon(themedIcon(Icons.Filled.Search, Icons.Outlined.Search), null) },
                 trailingIcon = {
                     if (filter.keyword.isNotEmpty()) IconButton(onClick = { viewModel.setKeyword("") }) {
-                        Icon(Icons.Filled.Close, contentDescription = "清空关键词")
+                        Icon(themedIcon(Icons.Filled.Close, Icons.Outlined.Close), contentDescription = "清空关键词")
                     }
                 }
             )
@@ -182,8 +184,8 @@ fun HomeScreen(
         ) {
             item(key = "overview") {
                 Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    shape = RoundedCornerShape(LocalThemeTokens.current.overviewCorner),
+                    colors = CardDefaults.cardColors(containerColor = if (LocalThemeTokens.current.ledgerRows) Color.Transparent else MaterialTheme.colorScheme.surface)
                 ) {
                     Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         MonthSwitcher(
@@ -196,7 +198,7 @@ fun HomeScreen(
                             Text(currency, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(bottom = 4.dp))
                             Text(AmountFormatter.format(summary.expenseCents),
-                                style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = AmountFontFeatures),
+                                style = MaterialTheme.typography.displayMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures),
                                 color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
                         }
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -219,7 +221,7 @@ fun HomeScreen(
                             selected = true, onClick = { viewModel.setCategoryFilter(null) },
                             label = { Text(categories.firstOrNull { it.id == id }?.name ?: "已选分类") },
                             trailingIcon = {
-                                Icon(Icons.Filled.Close, contentDescription = "清除分类", modifier = Modifier.size(16.dp))
+                                Icon(themedIcon(Icons.Filled.Close, Icons.Outlined.Close), contentDescription = "清除分类", modifier = Modifier.size(16.dp))
                             }
                         )
                     }
@@ -227,7 +229,7 @@ fun HomeScreen(
             }
             if (filter.isActive) {
                 item(key = "filtered") {
-                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+                    Surface(shape = RoundedCornerShape(LocalThemeTokens.current.rowCorner), color = MaterialTheme.colorScheme.primaryContainer) {
                         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Text("筛选结果 · ${bills.size} 笔", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
@@ -235,11 +237,11 @@ fun HomeScreen(
                             }
                             Text(
                                 "支出 ${AmountFormatter.withSymbol(filteredSummary.expenseCents, currency)}",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = AmountFontFeatures)
+                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures)
                             )
                             Text(
                                 "收入 ${AmountFormatter.withSymbol(filteredSummary.incomeCents, currency)}",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = AmountFontFeatures)
+                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures)
                             )
                         }
                     }
@@ -249,7 +251,7 @@ fun HomeScreen(
                 item(key = "empty") {
                     EmptyState(
                         if (filter.isActive) "没有符合条件的记录\n试试更换关键词或清除筛选" else "本月还没有记录\n从第一笔收支开始",
-                        Icons.Filled.Receipt
+                        themedIcon(Icons.Filled.Receipt, Icons.Outlined.Receipt)
                     )
                     if (!filter.isActive) TextButton(onClick = { onEditBill(null) }, modifier = Modifier.fillMaxWidth()) { Text("记第一笔") }
                 }
@@ -294,14 +296,14 @@ private fun SummaryValue(label: String, cents: Long, currency: String, modifier:
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(AmountFormatter.withSymbol(cents, currency),
-            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = AmountFontFeatures), color = color)
+            style = MaterialTheme.typography.titleMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures), color = color)
     }
 }
 
 @Composable
 private fun TypeFilters(type: String?, onSelect: (String?) -> Unit) {
     listOf(null to "全部", BillType.EXPENSE to "支出", BillType.INCOME to "收入").forEach { (value, label) ->
-        FilterChip(selected = type == value, onClick = { onSelect(value) }, label = { Text(label) })
+        AppFilterChip(selected = type == value, onClick = { onSelect(value) }, label = { Text(label) })
     }
 }
 
@@ -333,7 +335,7 @@ private fun SwipeToRevealRow(
         animationSpec = if (dragging) snap() else tween(180), label = "billSwipe"
     )
     val deleteWidth = with(LocalDensity.current) { (-offset).coerceIn(0f, revealPx).toDp() }
-    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))) {
+    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(LocalThemeTokens.current.rowCorner))) {
         BillRow(
             bill, currency, incomeColor, onClick,
             modifier = Modifier.offset { IntOffset(offset.roundToInt(), 0) }
@@ -375,13 +377,13 @@ private fun BillRow(
 ) {
     val isIncome = item.bill.type == BillType.INCOME
     Row(
-        modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
-            .clickable(onClickLabel = "编辑这笔记录", onClick = onClick)
+        modifier.fillMaxWidth().background(if (LocalThemeTokens.current.ledgerRows) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface)
+            .ledgerDivider().clickable(onClickLabel = "编辑这笔记录", onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        CategoryIconBox(CategoryIcons.byKey(item.category.icon), item.category.color.hexToColor(), size = 40.dp, corner = 12.dp)
+        CategoryIconBox(categoryIcon(item.category.icon), item.category.color.hexToColor(), size = 40.dp, corner = 12.dp)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(item.category.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (!item.bill.note.isNullOrBlank()) Text(
@@ -391,7 +393,7 @@ private fun BillRow(
         }
         Text(
             (if (isIncome) "+" else "−") + AmountFormatter.withSymbol(item.bill.amountCents, currency),
-            style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = AmountFontFeatures),
+            style = MaterialTheme.typography.titleSmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures),
             color = if (isIncome) incomeColor else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.widthIn(max = 160.dp)
         )
