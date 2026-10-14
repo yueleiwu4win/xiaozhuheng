@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 11 及以下（API ≤ 30）的自动备份规则：
+  dataExtractionRules 只在 API 31+ 生效，低版本必须用 fullBackupContent，
+  否则会回落到系统默认的"近乎全量备份"，行为与 31+ 不一致。
+-->
+<full-backup-content>
+    <include domain="database" path="." />
+    <include domain="file" path="datastore/" />
+    <include domain="file" path="backgrounds/" />
+</full-backup-content>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!--
+      仅暴露分享导出所需的目录（最小权限）。
+      原先还开了 <files-path path="." />（整个 filesDir 可生成 content:// 链接），
+      当前没有任何分享 filesDir 的场景，已移除。
+    -->
+    <cache-path
+        name="export"
+        path="export/" />
+</paths>

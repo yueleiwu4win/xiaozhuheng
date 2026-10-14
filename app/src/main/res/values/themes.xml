@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose 负责全部界面主题，这里只定义窗口级主题（背景 / 无 ActionBar） -->
+    <style name="Base.Theme.Bookkeeping" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/startup_window</item>
+        <item name="android:statusBarColor">@color/window_background</item>
+        <item name="android:navigationBarColor">@color/startup_ink</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <style name="Theme.Bookkeeping" parent="Base.Theme.Bookkeeping" />
+</resources>
