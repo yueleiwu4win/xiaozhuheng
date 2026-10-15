@@ -112,8 +112,12 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         context.dataStore.edit { it[KEY_THEME] = mode.value }
     }
 
-    suspend fun setThemeStyle(style: ThemeStyle) {
-        context.dataStore.edit { it[KEY_STYLE] = style.value }
+    suspend fun setThemeStyle(style: ThemeStyle, applyRecommendation: Boolean = true) {
+        // 一次提交风格及推荐明暗，避免切换时先闪过另一套配色。
+        context.dataStore.edit {
+            it[KEY_STYLE] = style.value
+            if (applyRecommendation) style.recommendedMode?.let { mode -> it[KEY_THEME] = mode.value }
+        }
     }
 
     suspend fun setBackground(spec: String) {

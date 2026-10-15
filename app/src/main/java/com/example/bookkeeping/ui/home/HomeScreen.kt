@@ -1,6 +1,8 @@
 package com.example.bookkeeping.ui.home
 
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.OverviewStyle
+import com.example.bookkeeping.ui.theme.HomeActionPlacement
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
@@ -35,8 +37,10 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bookkeeping.AppViewModelProvider
@@ -68,6 +72,9 @@ fun HomeScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val deleting by viewModel.deleting.collectAsStateWithLifecycle()
     val currency = AmountFormatter.symbolOf(settings.currency)
+    val tokens = LocalThemeTokens.current
+    val centeredOverview = tokens.overviewStyle == OverviewStyle.JADE
+    val headlineColor = if (tokens.neutralHeadline) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
     val incomeColor = LocalAppColors.current.income
     var monthPickerVisible by rememberSaveable { mutableStateOf(false) }
     var filtersVisible by rememberSaveable { mutableStateOf(false) }
@@ -91,7 +98,7 @@ fun HomeScreen(
         )
     }
     if (filtersVisible) {
-        ModalBottomSheet(onDismissRequest = { filtersVisible = false }, containerColor = if (LocalThemeTokens.current.ledgerRows) Color.Transparent else MaterialTheme.colorScheme.surface) {
+        ModalBottomSheet(onDismissRequest = { filtersVisible = false }, containerColor = MaterialTheme.colorScheme.surface) {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 28.dp),
@@ -147,7 +154,7 @@ fun HomeScreen(
             Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            ThemeBrandTitle(Modifier.weight(1f))
             IconButton(onClick = {
                 focusManager.clearFocus()
                 if (searchVisible) viewModel.setKeyword("")
@@ -179,27 +186,39 @@ fun HomeScreen(
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 104.dp),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp,
+                bottom = if (tokens.homeActionPlacement == HomeActionPlacement.DOCKED) 24.dp else 104.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             item(key = "overview") {
-                Card(
-                    shape = RoundedCornerShape(LocalThemeTokens.current.overviewCorner),
-                    colors = CardDefaults.cardColors(containerColor = if (LocalThemeTokens.current.ledgerRows) Color.Transparent else MaterialTheme.colorScheme.surface)
-                ) {
+                ThemeOverviewPanel {
                     Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        MonthSwitcher(
-                            DateUtils.monthName(yearMonth.year, yearMonth.monthValue),
-                            viewModel::prevMonth, viewModel::nextMonth,
-                            onLabelClick = { monthPickerVisible = true }
-                        )
-                        Text("本月支出 · ${summary.expenseCount} 笔", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Box(Modifier.fillMaxWidth(), contentAlignment = if (centeredOverview) Alignment.Center else Alignment.CenterStart) {
+                            MonthSwitcher(
+                                DateUtils.monthName(yearMonth.year, yearMonth.monthValue),
+                                viewModel::prevMonth, viewModel::nextMonth,
+                                onLabelClick = { monthPickerVisible = true }
+                            )
+                        }
+                        Text("本月支出 · ${summary.expenseCount} 笔", style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth(),
+                            textAlign = if (centeredOverview) TextAlign.Center else TextAlign.Start)
+                        if (centeredOverview) {
+                            val amount = AmountFormatter.withSymbol(summary.expenseCents, currency)
+                            Text(amount, Modifier.fillMaxWidth(),
+                                style = MaterialTheme.typography.displayLarge.copy(
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                                    fontSize = if (amount.length > 13) 26.sp else 36.sp,
+                                    fontFeatureSettings = AmountFontFeatures),
+                                textAlign = TextAlign.Center, color = headlineColor)
+                        } else {
                         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(currency, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary,
+                            Text(currency, style = MaterialTheme.typography.titleLarge, color = headlineColor,
                                 modifier = Modifier.padding(bottom = 4.dp))
                             Text(AmountFormatter.format(summary.expenseCents),
                                 style = MaterialTheme.typography.displayMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures),
-                                color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+                                color = headlineColor, modifier = Modifier.weight(1f))
+                        }
                         }
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         // 纵向允许换行，最大金额和大字体不会挤掉另一项。

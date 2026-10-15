@@ -139,9 +139,9 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
                     style = MaterialTheme.typography.titleLarge)
                 when (current) {
                     "style" -> {
-                        Text("选择整套页面、按钮和图标的风格，明暗模式与背景可分别设置。", style = MaterialTheme.typography.bodyMedium)
+                        Text("新主题会采用推荐的明暗模式。你也可以在「明暗模式」中自行调整或跟随系统。", style = MaterialTheme.typography.bodyMedium)
                         ThemeStyle.entries.forEach { style ->
-                            ChoiceRow("${style.label} · ${style.description}", style == settings.themeStyle, enabled = !busy) { viewModel.setThemeStyle(style); panel = null }
+                            ThemeStyleChoice(style, style == settings.themeStyle, enabled = !busy) { viewModel.setThemeStyle(style); panel = null }
                         }
                     }
                     "theme" -> ThemeMode.entries.forEach { mode ->

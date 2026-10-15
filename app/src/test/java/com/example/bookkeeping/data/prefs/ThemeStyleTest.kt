@@ -12,6 +12,8 @@ class ThemeStyleTest {
     }
     @Test fun savedStyleIdentifiersAreStableAndIndependentOfBrightness() {
         assertEquals(ThemeStyle.SONG, ThemeStyle.from("song"))
+        assertEquals(ThemeStyle.CELADON, ThemeStyle.from("celadon"))
+        assertEquals(ThemeStyle.INK_GOLD, ThemeStyle.from("ink_gold"))
         assertEquals(ThemeMode.DARK, ThemeMode.from("dark"))
         assertEquals(ThemeStyle.CLASSIC, ThemeStyle.from("dark"))
     }

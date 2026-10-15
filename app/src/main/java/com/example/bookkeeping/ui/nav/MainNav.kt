@@ -2,6 +2,8 @@ package com.example.bookkeeping.ui.nav
 
 import com.example.bookkeeping.ui.common.*
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.HomeActionPlacement
+import com.example.bookkeeping.ui.theme.SelectionStyle
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
@@ -10,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
@@ -32,6 +35,7 @@ import androidx.navigation.navArgument
 import com.example.bookkeeping.AppViewModelProvider
 import com.example.bookkeeping.ui.category.CategoryScreen
 import com.example.bookkeeping.ui.common.AppBackground
+import com.example.bookkeeping.ui.common.AppButton
 import com.example.bookkeeping.ui.edit.EditScreen
 import com.example.bookkeeping.ui.home.HomeScreen
 import com.example.bookkeeping.ui.home.HomeViewModel
@@ -148,14 +152,16 @@ private fun MainPageScaffold(
     snackbar: SnackbarHostState,
     content: @Composable () -> Unit
 ) {
+    val tokens = LocalThemeTokens.current
+    val dockedAction = route == ROUTE_HOME && tokens.homeActionPlacement == HomeActionPlacement.DOCKED
     Scaffold(
         containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            if (route == ROUTE_HOME) {
+            if (route == ROUTE_HOME && !dockedAction) {
                 ExtendedFloatingActionButton(
                     onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } },
-                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    icon = { Icon(themedIcon(Icons.Filled.Add, Icons.Outlined.Edit), contentDescription = null) },
                     text = { Text("记一笔") },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -164,6 +170,17 @@ private fun MainPageScaffold(
             }
         },
         bottomBar = {
+            Column {
+                if (dockedAction) Surface(color = MaterialTheme.colorScheme.background) {
+                    AppButton(
+                        onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp).heightIn(min = 52.dp)
+                    ) {
+                        Icon(Icons.Outlined.Edit, null)
+                        Spacer(Modifier.width(10.dp))
+                        Text("记一笔", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
             NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
                 NavigationBarItem(
                     selected = route == ROUTE_HOME,
@@ -187,6 +204,7 @@ private fun MainPageScaffold(
                     colors = themeNavigationColors()
                 )
             }
+            }
         }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) { content() }
@@ -194,16 +212,17 @@ private fun MainPageScaffold(
 }
 
 @Composable
-private fun themeNavigationColors() = if (LocalThemeTokens.current.ledgerRows)
+private fun themeNavigationColors() = if (LocalThemeTokens.current.navigationStyle != SelectionStyle.CLASSIC)
     NavigationBarItemDefaults.colors(
         selectedIconColor = MaterialTheme.colorScheme.primary,
         selectedTextColor = MaterialTheme.colorScheme.primary,
-        indicatorColor = Color.Transparent
+        indicatorColor = if (LocalThemeTokens.current.navigationStyle == SelectionStyle.PILL)
+            MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     ) else NavigationBarItemDefaults.colors()
 
 @Composable
 private fun ThemeNavigationIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, selected: Boolean) {
-    if (!LocalThemeTokens.current.ledgerRows) Icon(icon, contentDescription = null)
+    if (LocalThemeTokens.current.navigationStyle != SelectionStyle.BOOKMARK) Icon(icon, contentDescription = null)
     else Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(icon, contentDescription = null)
         Spacer(Modifier.height(4.dp))

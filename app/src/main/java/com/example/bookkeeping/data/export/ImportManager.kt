@@ -47,7 +47,8 @@ class ImportManager(
         settings.currency?.let { settingsRepository.setCurrency(it) }
         settings.weekStartMonday?.let { settingsRepository.setWeekStartMonday(it) }
         settings.themeMode?.let { settingsRepository.setThemeMode(ThemeMode.from(it)) }
-        settings.themeStyle?.let { settingsRepository.setThemeStyle(ThemeStyle.from(it)) }
+        // 恢复使用备份中的明暗模式，不套用首次选择主题时的推荐值。
+        settings.themeStyle?.let { settingsRepository.setThemeStyle(ThemeStyle.from(it), applyRecommendation = false) }
         var note = ""
         settings.background?.let { spec ->
             val usable = when {
