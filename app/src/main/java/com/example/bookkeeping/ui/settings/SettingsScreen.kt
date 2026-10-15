@@ -28,6 +28,8 @@ import com.example.bookkeeping.AppViewModelProvider
 import com.example.bookkeeping.data.export.ExportManager
 import com.example.bookkeeping.data.prefs.*
 import com.example.bookkeeping.ui.common.*
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.HomeLayout
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -84,7 +86,8 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
         BACKGROUND_SPEC_CUSTOM_IMAGE -> "相册图片"
         else -> BackgroundPresets.firstOrNull { it.spec() == settings.background }?.label ?: "自定义"
     }
-    Scaffold(containerColor = Color.Transparent, snackbarHost = { SnackbarHost(snackbar) }, topBar = { TopAppBar(title = { Text("设置") }) }) { padding ->
+    Scaffold(containerColor = Color.Transparent, snackbarHost = { SnackbarHost(snackbar) }, topBar = { TopAppBar(title = { Text("设置") },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = if (LocalThemeTokens.current.homeLayout != HomeLayout.STANDARD) Color.Transparent else MaterialTheme.colorScheme.surface)) }) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             androidx.compose.foundation.lazy.LazyColumn(
@@ -218,12 +221,14 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
 }
 
 @Composable
-private fun SettingRow(
+internal fun SettingRow(
     title: String, icon: ImageVector, subtitle: String? = null, value: String? = null,
     enabled: Boolean = true, danger: Boolean = false, onClick: () -> Unit
 ) {
     val color = if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-    Row(Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onClick).padding(vertical = 10.dp),
+    val art = LocalThemeTokens.current.homeLayout != HomeLayout.STANDARD
+    Row(Modifier.fillMaxWidth().then(if (art) Modifier.ledgerDivider() else Modifier).heightIn(min = 48.dp)
+        .clickable(enabled = enabled, onClick = onClick).padding(vertical = if (art) 8.dp else 10.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(icon, null, Modifier.size(22.dp), tint = if (danger) color else MaterialTheme.colorScheme.primary)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {

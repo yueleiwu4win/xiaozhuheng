@@ -1,6 +1,7 @@
 package com.example.bookkeeping.ui.stats
 
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.HomeLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -72,6 +73,7 @@ fun StatsScreen(
         topBar = {
             TopAppBar(
                 title = { Text(if (annualVisible) "年度分析" else "收支分析") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = if (LocalThemeTokens.current.homeLayout != HomeLayout.STANDARD) Color.Transparent else MaterialTheme.colorScheme.surface),
                 navigationIcon = {
                     if (annualVisible) IconButton(onClick = { annualVisible = false }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回月度分析")
@@ -129,7 +131,7 @@ fun StatsScreen(
                         item {
                             SectionCard("当月${label}") {
                                 Text(AmountFormatter.withSymbol(monthData.total, currency),
-                                    style = MaterialTheme.typography.displayMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures), color = accent)
+                                    style = themeAmountStyle(MaterialTheme.typography.displayMedium), color = accent)
                                 Text("较上月 ${percentChange(monthData.total, monthData.previous) ?: "暂无可比数据"}",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                 Text("${monthData.count} 笔记录", style = MaterialTheme.typography.bodyMedium)
@@ -171,7 +173,7 @@ fun StatsScreen(
                         item {
                             SectionCard("${selection.year}年${label}") {
                                 Text(AmountFormatter.withSymbol(total, currency),
-                                    style = MaterialTheme.typography.headlineMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures), color = accent)
+                                    style = themeAmountStyle(MaterialTheme.typography.headlineMedium), color = accent)
                                 val prev = yearData.years.firstOrNull { it.label == selection.year - 1 }?.totalCents ?: 0L
                                 Text("较上一年 ${percentChange(total, prev) ?: "暂无可比数据"}",
                                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -225,7 +227,7 @@ fun StatsScreen(
                                 SectionCard("年度月均") {
                                     val months = if (selection.year == YearMonth.now().year) YearMonth.now().monthValue else 12
                                     Text(AmountFormatter.withSymbol(total / months, currency),
-                                        style = MaterialTheme.typography.headlineMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures))
+                                        style = themeAmountStyle(MaterialTheme.typography.headlineMedium))
                                 }
                             }
                         } else {
@@ -287,7 +289,7 @@ private fun CategoryComposition(categories: List<CategoryTotal>, currency: Strin
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text(AmountFormatter.withSymbol(c.totalCents, currency),
-                        style = MaterialTheme.typography.titleSmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures))
+                        style = themeAmountStyle(MaterialTheme.typography.titleSmall))
                     Icon(Icons.Filled.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }

@@ -3,6 +3,7 @@ package com.example.bookkeeping.ui.home
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import com.example.bookkeeping.ui.theme.OverviewStyle
 import com.example.bookkeeping.ui.theme.HomeActionPlacement
+import com.example.bookkeeping.ui.theme.HomeLayout
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
@@ -148,6 +149,41 @@ fun HomeScreen(
         }
     }
     val filteredSummary = remember(bills) { summarizeBills(bills) }
+
+    if (tokens.homeLayout != HomeLayout.STANDARD) {
+        LedgerHomeContent(
+            yearMonth = yearMonth, rows = rows, summary = summary, filteredSummary = filteredSummary,
+            filter = filter, categoryName = categories.firstOrNull { it.id == filter.categoryId }?.name,
+            currency = currency, searchVisible = searchVisible,
+            onSearch = {
+                focusManager.clearFocus()
+                if (searchVisible) viewModel.setKeyword("")
+                searchVisible = !searchVisible
+            },
+            onFilters = { focusManager.clearFocus(); filtersVisible = true },
+            searchContent = {
+                OutlinedTextField(filter.keyword, viewModel::setKeyword,
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp).focusRequester(searchFocus),
+                    placeholder = { Text("搜索本月备注") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }))
+            },
+            onPreviousMonth = viewModel::prevMonth, onNextMonth = viewModel::nextMonth,
+            onChooseMonth = { monthPickerVisible = true },
+            onCurrentMonth = { viewModel.setYearMonth(java.time.YearMonth.now()) },
+            onType = viewModel::setTypeFilter, onClearCategory = { viewModel.setCategoryFilter(null) },
+            onReset = viewModel::resetFilters, onCreate = { onEditBill(null) }
+        ) { item ->
+            SwipeToRevealRow(item, currency, incomeColor, revealedBillId == item.bill.id,
+                onRevealedChange = { open -> revealedBillId = if (open) item.bill.id else 0L },
+                onClick = {
+                    focusManager.clearFocus()
+                    if (revealedBillId == item.bill.id) revealedBillId = 0L else onEditBill(item.bill.id)
+                },
+                onDelete = { if (!deleting) deleteTarget = item })
+        }
+        return
+    }
 
     Column(Modifier.fillMaxSize()) {
         Row(
@@ -394,6 +430,10 @@ private fun BillRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (LocalThemeTokens.current.homeLayout != HomeLayout.STANDARD) {
+        LedgerBillRow(item, currency, incomeColor, onClick, modifier)
+        return
+    }
     val isIncome = item.bill.type == BillType.INCOME
     Row(
         modifier.fillMaxWidth().background(if (LocalThemeTokens.current.ledgerRows) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface)

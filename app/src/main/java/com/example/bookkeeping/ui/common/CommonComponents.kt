@@ -1,6 +1,7 @@
 package com.example.bookkeeping.ui.common
 
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.HomeLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -54,21 +55,23 @@ fun SectionCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val art = LocalThemeTokens.current.homeLayout != HomeLayout.STANDARD
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(LocalThemeTokens.current.sectionCorner),
-        colors = CardDefaults.cardColors(containerColor = if (LocalThemeTokens.current.groupedSections) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background),
+        colors = CardDefaults.cardColors(containerColor = if (LocalThemeTokens.current.groupedSections) MaterialTheme.colorScheme.surface else if (art) Color.Transparent else MaterialTheme.colorScheme.background),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(if (art) 16.dp else 20.dp),
+            verticalArrangement = Arrangement.spacedBy(if (art) 8.dp else 12.dp)
         ) {
             Text(
                 text = title,
                 style = if (LocalThemeTokens.current.groupedSections) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (art) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (art && !LocalThemeTokens.current.groupedSections) androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             content()
         }
     }
@@ -128,7 +131,7 @@ fun MetricCard(
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = "tnum")
+                style = themeAmountStyle(MaterialTheme.typography.titleMedium)
             )
             if (sub != null) {
                 Text(

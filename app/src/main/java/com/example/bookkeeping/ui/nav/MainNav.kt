@@ -4,6 +4,9 @@ import com.example.bookkeeping.ui.common.*
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import com.example.bookkeeping.ui.theme.HomeActionPlacement
 import com.example.bookkeeping.ui.theme.SelectionStyle
+import com.example.bookkeeping.ui.theme.HomeLayout
+import com.example.bookkeeping.ui.home.LedgerNavigationBar
+import com.example.bookkeeping.ui.home.LedgerCreateButton
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
@@ -159,6 +162,9 @@ private fun MainPageScaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             if (route == ROUTE_HOME && !dockedAction) {
+                if (tokens.homeLayout == HomeLayout.INK_GOLD) {
+                    LedgerCreateButton(onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } }, wide = false)
+                } else {
                 ExtendedFloatingActionButton(
                     onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } },
                     icon = { Icon(themedIcon(Icons.Filled.Add, Icons.Outlined.Edit), contentDescription = null) },
@@ -167,11 +173,15 @@ private fun MainPageScaffold(
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                     shape = if (LocalThemeTokens.current.ledgerRows) RoundedCornerShape(LocalThemeTokens.current.actionCorner) else FloatingActionButtonDefaults.extendedFabShape
                 )
+                }
             }
         },
         bottomBar = {
             Column {
-                if (dockedAction) Surface(color = MaterialTheme.colorScheme.background) {
+                if (dockedAction && tokens.homeLayout == HomeLayout.CELADON) Surface(color = MaterialTheme.colorScheme.background) {
+                    LedgerCreateButton(onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } },
+                        wide = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
+                } else if (dockedAction) Surface(color = MaterialTheme.colorScheme.background) {
                     AppButton(
                         onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp).heightIn(min = 52.dp)
@@ -181,7 +191,11 @@ private fun MainPageScaffold(
                         Text("记一笔", style = MaterialTheme.typography.titleMedium)
                     }
                 }
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
+            if (tokens.homeLayout != HomeLayout.STANDARD) {
+                LedgerNavigationBar(selected = when (route) { ROUTE_HOME -> 0; ROUTE_STATS -> 1; else -> 2 }) { index ->
+                    navigateTab(listOf(ROUTE_HOME, ROUTE_STATS, ROUTE_ME)[index], navController)
+                }
+            } else NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
                 NavigationBarItem(
                     selected = route == ROUTE_HOME,
                     onClick = { navigateTab(ROUTE_HOME, navController) },

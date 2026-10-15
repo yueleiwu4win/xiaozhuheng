@@ -2,6 +2,7 @@ package com.example.bookkeeping.ui.edit
 
 import com.example.bookkeeping.ui.common.*
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.HomeLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
@@ -284,8 +285,9 @@ fun EditScreen(
 }
 
 @Composable
-private fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+internal fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val color = category.color.hexToColor()
+    val art = LocalThemeTokens.current.homeLayout != HomeLayout.STANDARD
     val background by animateColorAsState(
         if (selected) MaterialTheme.colorScheme.primaryContainer else if (LocalThemeTokens.current.ledgerRows) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface,
         label = "categorySelection"
@@ -296,8 +298,8 @@ private fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: B
         border = if (selected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)
+            Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = if (art) 8.dp else 12.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(if (art) 4.dp else 6.dp)
         ) {
             Icon(categoryIcon(category.icon), null, Modifier.size(26.dp), tint = if (selected) MaterialTheme.colorScheme.primary else themeCategoryColor(color))
             Text(
@@ -310,7 +312,7 @@ private fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: B
 }
 
 @Composable
-private fun AmountKeyboard(
+internal fun AmountKeyboard(
     enabled: Boolean,
     date: LocalDate,
     hasNote: Boolean,

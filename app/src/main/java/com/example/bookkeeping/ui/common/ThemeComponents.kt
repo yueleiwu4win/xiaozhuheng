@@ -29,6 +29,10 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.HomeLayout
+import com.example.bookkeeping.ui.theme.LedgerTypeface
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import com.example.bookkeeping.util.CategoryIcons
 
 @Composable
@@ -93,6 +97,18 @@ fun categoryIcon(key: String): ImageVector = CategoryIcons.byKey(key, LocalTheme
 @Composable
 fun themedIcon(classic: ImageVector, outlined: ImageVector): ImageVector =
     if (LocalThemeTokens.current.outlinedIcons) outlined else classic
+
+@Composable
+fun themeAmountStyle(base: TextStyle): TextStyle = base.copy(
+    fontFamily = if (LocalThemeTokens.current.homeLayout == HomeLayout.STANDARD) FontFamily.SansSerif else LedgerTypeface,
+    fontFeatureSettings = "tnum"
+)
+
+/** 同一纸纤维素材由不同主题以低透明度使用，不将整页参考图当背景。 */
+@Composable
+internal fun LedgerPaper(modifier: Modifier = Modifier, alpha: Float = 0.1f) {
+    Image(painterResource(R.drawable.ledger_paper_texture), null, modifier, contentScale = ContentScale.Crop, alpha = alpha)
+}
 
 @Composable
 fun themeCategoryColor(color: Color): Color = when {

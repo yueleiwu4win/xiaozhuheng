@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import com.example.bookkeeping.ui.theme.LocalAppDark
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +23,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.graphicsLayer
+import com.example.bookkeeping.ui.theme.HomeLayout
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_CUSTOM_IMAGE
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_DEFAULT
 import kotlinx.coroutines.Dispatchers
@@ -76,12 +81,19 @@ fun AppBackground(modifier: Modifier = Modifier) {
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
                 )
-                LocalThemeTokens.current.ornament?.let { resource ->
+                val layout = LocalThemeTokens.current.homeLayout
+                if (layout != HomeLayout.STANDARD) LedgerPaper(Modifier.fillMaxSize(), if (isDark) 0.035f else 0.075f)
+                if (layout != HomeLayout.CELADON) LocalThemeTokens.current.ornament?.let { resource ->
                     Image(
                         painterResource(resource), contentDescription = null,
-                        modifier = Modifier.fillMaxSize(), contentScale = ContentScale.FillWidth,
-                        alignment = androidx.compose.ui.Alignment.TopEnd, alpha = if (isDark) 0.08f else 0.16f
+                        modifier = if (layout == HomeLayout.INK_GOLD) Modifier.align(androidx.compose.ui.Alignment.TopEnd).offset(y = 60.dp).size(300.dp)
+                            else Modifier.fillMaxSize(), contentScale = ContentScale.FillWidth,
+                        alignment = androidx.compose.ui.Alignment.TopEnd,
+                        alpha = if (isDark) { if (layout == HomeLayout.INK_GOLD) 0.13f else 0.08f } else 0.16f
                     )
+                    if (layout == HomeLayout.INK_GOLD) Image(painterResource(resource), null,
+                        Modifier.size(300.dp).align(androidx.compose.ui.Alignment.BottomStart)
+                            .offset(y = (-60).dp).graphicsLayer(rotationZ = 180f), contentScale = ContentScale.Fit, alpha = if (isDark) 0.1f else 0.12f)
                 }
             }
 

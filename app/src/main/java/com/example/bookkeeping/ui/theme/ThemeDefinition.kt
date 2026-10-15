@@ -20,6 +20,7 @@ import com.example.bookkeeping.data.prefs.ThemeStyle
 enum class OverviewStyle { CARD, LEDGER, JADE }
 enum class SelectionStyle { CLASSIC, OUTLINED, PILL, BOOKMARK }
 enum class HomeActionPlacement { FLOATING, DOCKED }
+enum class HomeLayout { STANDARD, CELADON, INK_GOLD }
 
 @Immutable
 data class ThemeTokens(
@@ -45,7 +46,8 @@ data class ThemeTokens(
     val portraitBrand: Boolean = false,
     val abacusBrand: Boolean = false,
     val monochromeCategoryIcons: Boolean = false,
-    val neutralHeadline: Boolean = false
+    val neutralHeadline: Boolean = false,
+    val homeLayout: HomeLayout = HomeLayout.STANDARD
 )
 
 data class ThemeDefinition(
@@ -57,11 +59,24 @@ data class ThemeDefinition(
 )
 
 private val SongHeadings = FontFamily(Font(R.font.song_headings, FontWeight.SemiBold))
+val LedgerTypeface = FontFamily(
+    Font(R.font.ledger_text, FontWeight.Normal),
+    Font(R.font.song_headings, FontWeight.SemiBold)
+)
 private val SongTypography = Typography.copy(
     titleLarge = Typography.titleLarge.copy(fontFamily = SongHeadings, letterSpacing = 1.sp),
     titleMedium = Typography.titleMedium.copy(fontFamily = SongHeadings),
     headlineMedium = Typography.headlineMedium.copy(fontFamily = SongHeadings),
     labelSmall = Typography.labelSmall.copy(fontSize = 14.sp, lineHeight = 20.sp)
+)
+
+private val LedgerTypography = SongTypography.copy(
+    bodyLarge = Typography.bodyLarge.copy(fontFamily = LedgerTypeface),
+    bodyMedium = Typography.bodyMedium.copy(fontFamily = LedgerTypeface),
+    bodySmall = Typography.bodySmall.copy(fontFamily = LedgerTypeface),
+    labelLarge = Typography.labelLarge.copy(fontFamily = LedgerTypeface),
+    labelMedium = Typography.labelMedium.copy(fontFamily = LedgerTypeface),
+    labelSmall = Typography.labelSmall.copy(fontFamily = LedgerTypeface)
 )
 
 object ThemeRegistry {
@@ -129,7 +144,7 @@ object ThemeRegistry {
             onBackground = Color(0xFFE4EFE6), onSurfaceVariant = Color(0xFFBBCABD),
             outline = Color(0xFF8DA593), outlineVariant = Color(0xFF465B4B)
         ),
-        typography = SongTypography,
+        typography = LedgerTypography,
         shapes = Shapes(
             extraSmall = RoundedCornerShape(8.dp), small = RoundedCornerShape(12.dp),
             medium = RoundedCornerShape(16.dp), large = RoundedCornerShape(20.dp),
@@ -143,7 +158,7 @@ object ThemeRegistry {
             ornament = R.drawable.guofeng_bamboo, overviewStyle = OverviewStyle.JADE,
             filterStyle = SelectionStyle.PILL, navigationStyle = SelectionStyle.PILL,
             homeActionPlacement = HomeActionPlacement.DOCKED,
-            portraitBrand = true, monochromeCategoryIcons = true
+            portraitBrand = true, monochromeCategoryIcons = true, homeLayout = HomeLayout.CELADON
         )
     )
 
@@ -164,11 +179,11 @@ object ThemeRegistry {
             primary = Color(0xFFE0C18A), onPrimary = Color(0xFF142B25),
             primaryContainer = Color(0xFF294B3B), onPrimaryContainer = Color(0xFFF4F0E6),
             secondary = Color(0xFFC7B68E), secondaryContainer = Color(0xFF294239),
-            onSecondaryContainer = Color(0xFFF4F0E6), background = Color(0xFF142B25),
+            onSecondaryContainer = Color(0xFFF4F0E6), background = Color(0xFF0B2D24),
             surface = Color(0xFF1D352D), surfaceContainer = Color(0xFF1D352D),
             outlineVariant = Color(0xFF42594A)
         ),
-        typography = SongTypography,
+        typography = LedgerTypography,
         shapes = Shapes(
             extraSmall = RoundedCornerShape(4.dp), small = RoundedCornerShape(6.dp),
             medium = RoundedCornerShape(10.dp), large = RoundedCornerShape(12.dp),
@@ -181,7 +196,7 @@ object ThemeRegistry {
             ledgerRows = true, outlinedIcons = true, mutedCategoryIcons = true,
             ornament = R.drawable.guofeng_bamboo, overviewStyle = OverviewStyle.LEDGER,
             filterStyle = SelectionStyle.BOOKMARK, navigationStyle = SelectionStyle.BOOKMARK,
-            abacusBrand = true, monochromeCategoryIcons = true, neutralHeadline = true
+            abacusBrand = true, monochromeCategoryIcons = true, neutralHeadline = true, homeLayout = HomeLayout.INK_GOLD
         )
     )
 

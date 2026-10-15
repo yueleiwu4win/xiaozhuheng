@@ -1,8 +1,20 @@
+// 可选的原生 Compose 截图验收；常规编译不加载或下载此工具。
+buildscript {
+    if (project.hasProperty("visualQa")) {
+        repositories { mavenCentral(); google() }
+        dependencies { classpath("app.cash.paparazzi:paparazzi-gradle-plugin:1.3.5") }
+    }
+}
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.kapt")
+}
+
+if (project.hasProperty("visualQa")) {
+    apply(plugin = "app.cash.paparazzi")
 }
 
 android {
@@ -13,8 +25,8 @@ android {
         applicationId = "com.example.bookkeeping"
         minSdk = 26
         targetSdk = 34
-        versionCode = 5
-        versionName = "1.1"
+        versionCode = 6
+        versionName = "1.1.1"
     }
 
     buildTypes {
@@ -42,6 +54,10 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    if (project.hasProperty("visualQa")) {
+        sourceSets.getByName("test").java.srcDir("src/visualQa/java")
     }
 
     packaging {

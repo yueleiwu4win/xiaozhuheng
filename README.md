@@ -7,7 +7,7 @@
 
 当前基础版本为 **1.0**（versionCode 3），以 Git 标签 `v1.0` 固定保存。后续体验优化可以从此版本继续开发；版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
-当前 feature 分支提供 **1.1 主题体验版**：设置 → 外观 → 界面风格，可切换经典、宋式书账、青玉雅集与墨金藏书。青玉雅集推荐浅色，墨金藏书推荐深色，也可自行选择明暗或跟随系统。开发与扩展说明见 [主题系统与扩展说明](docs/主题系统与扩展说明.md)。
+当前 feature 分支提供 **1.1.1 主题体验版**：设置 → 外观 → 界面风格，可切换经典、宋式书账、青玉雅集与墨金藏书。青玉与墨金使用独立首页布局，分别采用玉色概览与通栏账页；青玉推荐浅色，墨金推荐深色。参考图效果使用「主题默认」背景。开发与截图验证说明见 [主题系统与扩展说明](docs/主题系统与扩展说明.md)。
 
 ## 功能（V1.0）
 
@@ -90,13 +90,16 @@ gradlew.bat :app:assembleDebug
 gradlew.bat :app:packageXiaozhuheng
 ```
 
-产物：`app\build\outputs\distribution\xiaozhuheng-v1.1.apk`。`preview` 使用非调试运行模式，沿用本机 debug 签名；其他电脑生成的 debug 签名不同，不能直接覆盖原安装包。签名文件不提交到仓库。
+产物：`app\build\outputs\distribution\xiaozhuheng-v1.1.1.apk`。`preview` 使用非调试运行模式，沿用本机 debug 签名；其他电脑生成的 debug 签名不同，不能直接覆盖原安装包。签名文件不提交到仓库。
 
 验证代码：
 
 ```bat
 gradlew.bat :app:testDebugUnitTest :app:lintDebug
 ```
+
+可选原生截图验收：`gradlew.bat :app:recordPaparazziDebug -PvisualQa --tests "*Ledger*SnapshotTest*"`。
+只在带 `-PvisualQa` 时加载 Paparazzi；不增加 APK 的运行依赖。已接受的截图位于 `app/src/test/snapshots/images`，图文对照见 [design-qa.md](design-qa.md)。
 
 > `local.properties`（SDK 路径）已加入 `.gitignore`，由 Studio 自动创建或手工写入：
 > `sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk`

@@ -2,6 +2,7 @@ package com.example.bookkeeping.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -101,13 +102,16 @@ fun BookkeepingTheme(
 ) {
     val dark = themeMode.isDark()
     val definition = ThemeRegistry.resolve(themeStyle)
+    val palette = if (dark) definition.dark else definition.light
     CompositionLocalProvider(
         LocalAppColors provides if (dark) DarkAppColors else LightAppColors,
         LocalAppDark provides dark,
-        LocalThemeTokens provides definition.tokens
+        LocalThemeTokens provides definition.tokens,
+        // 透明 Scaffold 的 contentColor 继承此值，深色页面不再落到默认黑色。
+        LocalContentColor provides palette.onSurface
     ) {
         MaterialTheme(
-            colorScheme = if (dark) definition.dark else definition.light,
+            colorScheme = palette,
             typography = definition.typography,
             shapes = definition.shapes,
             content = content
