@@ -181,7 +181,8 @@ object ThemeRegistry {
             secondary = Color(0xFFC7B68E), secondaryContainer = Color(0xFF294239),
             onSecondaryContainer = Color(0xFFF4F0E6), background = Color(0xFF0B2D24),
             surface = Color(0xFF1D352D), surfaceContainer = Color(0xFF1D352D),
-            outlineVariant = Color(0xFF42594A)
+            onSurfaceVariant = Color(0xFFE0E5DB),
+            outlineVariant = Color(0x6695A496)
         ),
         typography = LedgerTypography,
         shapes = Shapes(
@@ -196,6 +197,7 @@ object ThemeRegistry {
             ledgerRows = true, outlinedIcons = true, mutedCategoryIcons = true,
             ornament = R.drawable.guofeng_bamboo, overviewStyle = OverviewStyle.LEDGER,
             filterStyle = SelectionStyle.BOOKMARK, navigationStyle = SelectionStyle.BOOKMARK,
+            homeActionPlacement = HomeActionPlacement.DOCKED,
             abacusBrand = true, monochromeCategoryIcons = true, neutralHeadline = true, homeLayout = HomeLayout.INK_GOLD
         )
     )

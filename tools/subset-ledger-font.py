@@ -13,7 +13,8 @@ text = ''.join(p.read_text(encoding='utf-8') for p in Path('app/src/main/java').
 text += ''.join(chr(c) for c in range(32, 127))
 options = subset.Options()
 subsetter = subset.Subsetter(options=options)
-subsetter.populate(text=text)
+# 账单备注/用户分类是动态内容，不能只收录源码中的汉字，否则正文会混入系统黑体。
+subsetter.populate(text=text, unicodes=list(range(0x4E00, 0xA000)) + list(range(0x3000, 0x3040)) + list(range(0xFF00, 0xFFF0)))
 subsetter.subset(font)
 for entry in font['name'].names:
     if entry.nameID in (1, 3, 4, 6, 16):

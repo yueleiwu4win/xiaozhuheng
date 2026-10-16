@@ -1,75 +1,65 @@
-# 青玉雅集 / 墨金藏书首页验收
+# 墨金藏书 1.1.2 原生页面验收
 
 final result: passed
 
-验收范围：两套首页的原生 Compose 排版、明暗配色、响应式边界，以及相关生产控件的字体与颜色。
-不将此结果表述为真机触控、完整端到端流程或启动性能验证。
+范围：本轮墨金首页视觉还原、真实生产组件及分类筛选模型回归。截图不是浏览器/网页模拟，也不代表真机触控、输入法、启动性能或完整端到端验收。
 
-## 对照对象与方法
+## 视觉基准与状态
 
-- 参考：`docs/design/guofeng/02-celadon-v2.png`、`03-ink-gold-v2.png`，各 853×1844 px。
-- 实现：`app/src/test/snapshots/images/com.example.bookkeeping.ui.home_LedgerHomeSnapshotTest_celadon.png`、`com.example.bookkeeping.ui.home_LedgerHomeSnapshotTest_inkGold.png`，各 393×850 px。
-- 使用生产 `LedgerHomeContent`、`LedgerBillRow`、`AppBackground`、记账按钮和导航组件，Paparazzi 1.3.5 / Android Layoutlib 渲染。没有另建网页、使用参考图作为页面背景，或用静态图片替代按钮。
-- 内容视口 393×850 dp，density=160 dpi，fontScale=1；不绘制系统状态栏、导航手势或手机外框，参考图也无这些系统区域。
-- 状态：2026 年 10 月，今天固定为 10 月 14 日，全部筛选；支出 2023.71、收入 8000.00、结余 5976.29；当天三笔、昨日一笔。
-- 参考等比例归一至 393×850（原图宽高比取整差小于 1px），与同尺寸实现并排合成 786×850 对照板。左侧参考，右侧实现。
-- 复现命令：`gradlew.bat :app:recordPaparazziDebug -PvisualQa --tests "*Ledger*SnapshotTest*"`；比对板：`python tools/compare-ledger-screenshots.py`。
-- 已接受的基准可用 `gradlew.bat :app:verifyPaparazziDebug -PvisualQa --tests "*Ledger*SnapshotTest*"` 做后续回归检查。
+- 源图：`docs/design/guofeng/ink-gold-user-target.png`，用户本次给出的 1024×1536 px 双栏原稿。上一版 `03-ink-gold-v2.png` 是纵向变体，本轮不再拿它替代原稿。
+- 实现：`app/src/test/snapshots/images/com.example.bookkeeping.ui.home_InkGoldReferenceSnapshotTest_referenceRatio.png`，600×900 px/dp，160 dpi，fontScale=1。使用 Android Layoutlib / Paparazzi 1.3.5 渲染生产 InkGoldHomeContent、LedgerBillRow、AppBackground、记账按钮和导航。
+- 原图等比例缩至 600×900，左参考/右实现合成 1200×900；无拉伸，没有把原稿当作可交互页面背景。原稿与实现都不包含系统状态栏、手机边框或手势栏；这是原生 dp 视口，不是 CSS 页面。
+- 状态同为 2024 年 10 月，支出 2346.80、收入 5800.00、结余 3453.20；10月12日五笔，10月11日三笔。主标题/金额与原稿相同。原稿的二级分类标签不是现有数据字段，因此副行展示实际分类，不虚构新分类数据。
+- 手机补充视口 393×850；窄屏 320×720、200% 字号、超长金额；另外覆盖原青玉首页、反向明暗、130% 字号、缩短可用高度与两套生产控件板。
+- 照片补充使用用户原始人物图 `ink-gold-photo-fixture.png`，复用生产 AppBackgroundContent 绘制和原 0.55 黑色蒙层。仅测试用例同步解码以保证确定性，应用仍在 IO 线程解码。用户背景选择未改动、未迁移。
 
 ## 最终证据
 
-![青玉完整对照](docs/design/guofeng/qa/celadon-comparison.png)
+完整并排：`docs/design/guofeng/qa/ink-gold-v112-comparison.png`。
 
-![墨金完整对照](docs/design/guofeng/qa/inkGold-comparison.png)
+放大核对：`ink-gold-v112-top.png`（1200×320），`ink-gold-v112-list.png`（1200×580），与完整对照使用同一坐标裁切，不修改页面元素。顶部核对字体、金额/单位、金线与双栏；下部核对账目密度、图标、CTA 和导航。
 
-放大核对图同样左参考 / 右实现：
+手机背景并排：`docs/design/guofeng/qa/ink-gold-v112-backgrounds.png`（786×850，左主题默认、右保留照片）。
 
-- `docs/design/guofeng/qa/celadon-top.png`、`celadon-list.png`。
-- `docs/design/guofeng/qa/inkGold-top.png`、`inkGold-list.png`。
-- 上半区覆盖标题、金额、收支、选中状态；下半区覆盖分类、备注、金额对齐、CTA 和导航。放大是为了辨认字体、金额完整性与细线，没有改变原截图。
+交互状态原生截图：`app/src/test/snapshots/images/com.example.bookkeeping.ui.home_InkGoldReferenceSnapshotTest_` 前缀下的 `categoryAndSearch.png`、`emptySearch.png`、`largeFont.png`。
 
 ## 修正记录
 
-| 轮次 | 问题 | 修正与复核 |
-| --- | --- | --- |
-| 1 | P1：深色页标题、分类和日期出现黑色 | Theme 根统一提供 onSurface 内容色。后续深色首页及控件板均为正确浅色文字 |
-| 1–2 | P2：青玉概览约 268dp，第四条账目被底栏挤压 | 校准到约 233dp，缩短行距与无效留白；最后对照中四条记录与备注完整出现 |
-| 2–3 | P2：列表不透明背景形成条状色块 | 账目行使用透明账页，分隔线保持连续，背景材质不再被色块截断 |
-| 2–3 | P2：头像取景太远，算盘缩到小尺寸后难以辨识 | 使用用户原图做脸部取景，重新生成适合 80×32dp 的粗细算盘素材；原生截图核对 |
-| 3–4 | P2：墨金筛选横向分布过宽，书签指示过小 | 筛选项采用 80dp 宽、左对齐，选中下划线与书签重新定位 |
-| 边界复核 | P2：200% 字号下月份按钮拥挤、超长结余被裁切 | 月份按可用宽度测量，大字号时收支纵向排列；金额测量后必要时完整换行，截图金额完整 |
-| 边界复核 | P2：系统栏缩小可用高度时列表空间不足 | 页面可用高度低于 680dp 时收紧头部、概览和日期留白；393×802 内容视口仍可展示四条示例记录 |
-
-过程中的较早对照板保存在本机 `app/build/visual-qa/iteration-1` 与 `iteration-2`，最终证据以上述已保存的对照板和基准截图为准。
+1. [P1] 旧实现使用纵向通用首页：品牌、月份、支出、收支顺次堆叠，收支三选栏和悬浮按钮与本次原稿不符。已独立为 InkGoldHomeContent：双栏品牌/月份搜索，左右概览，真实横向分类，备注主标题与分类副标题，底部通栏 CTA。
+2. [P1] 字体仅含源码汉字，用户备注回落为系统字体。正文补入基本汉字、中文标点及全角字符；动态备注也保持宋体。标题仍使用 600 字重，正文/金额为 400 字重。
+3. [P2] 首次渲染暴露 SubcomposeLayout 与 intrinsic 测量冲突，页面不能绘制。删除 intrinsic 依赖，改由 Box 测量正文后匹配竖线；后续全部原生渲染成功。
+4. [P2] 首轮有效截图中概览金线错位、旧算盘缩小不可辨识、默认纹理过强。金线统一顶部基线，使用已有清楚算盘资源，默认布纹叠加降低为 0.42 alpha；照片背景保持原设置。对应初轮截图留在忽略的 `app/build/visual-qa/ink-iteration-1/`。
+5. [P2] 金额单位与数值分离，长金额时单位过小。改为同一富文本基线，单位最小 10sp，整体按可用宽度测量缩放。超窄/大字号下头部和概览纵排，内容仍可滚动，CTA/导航独立可见。
+6. [P2] 同比例视口末条记录未完整出现在首屏。进一步减少宽视口概览/日期留白，账单保持至少48dp；最终对照中八条记录完整显示在 CTA 之上。
+7. 提高墨金辅助文字亮度，保持原照片背景蒙层时也更清楚。最终照片对照已检查，未把照片背景视为错误或强制重置。
 
 ## 五项视觉检查
 
-1. **字体**：Noto Serif SC 的 400/600 静态子集，首页数字、短标题、正文统一衬线气质；金额测量包含真实字重、字体缩放和可用宽度。输入键盘继续使用系统数字字体。自定义罕见汉字由系统回退。
-2. **排版**：青玉居中金额与玉色面板、墨金通栏概览、日期分组与连续账目、两种 CTA 位置均已对照；大字号汇总主动改变布局，功能按钮保留可触达空间。
-3. **颜色**：推荐的浅色青玉 / 深色墨金，以及反向明暗组合均渲染检查。透明容器的文字继承已修正。颜色角色还有现有对比度单测；纹理合成后的逐像素对比度未单独测量。
-4. **素材**：使用原有品牌图片、真实生成的纸纤维与竹叶、重新生成的小算盘。未以代码画图替代插画；常规操作与分类使用 Material 图标库。
-5. **文案**：月度支出、收入、结余、全部/支出/收入、日期、备注和金额与样例状态一致；选中态和正负号可见。
+- 字体：嵌入 OFL Noto Serif SC 400/600；标题、备注、金额层级明确；主金额单位共用基线；200% 字体完整显示长金额，必要时副行金额允许换行。
+- 排版：原稿双栏、横向分类、连续细线账目、通栏 CTA、横向选中导航已落实。手机分类可横滑，窄屏大字体纵向布局，整体账页滚动。
+- 配色：深墨绿、暖白文字、淡金交互；主题默认布面纹理与用户照片均保留。浅色变体继续使用纸白/古铜；配色单测覆盖文字对比度。
+- 素材：实际本地算盘和生成布面，无 UI 截图贴图；标准图标使用既有 Material 图标库。
+- 内容：源图金额和八条示例账目同态；生产版本消费真实分类、账目与月份状态，月概览不受搜索/分类筛选改变。筛选、重置与“全部”接原有 ViewModel/Repository。
 
-## 额外渲染场景
+## P3 与验证边界
 
-共 9 项：两个推荐首页、青玉深色、墨金浅色、320×720 / 130% 字号墨金超长金额、320×720 / 200% 字号青玉超长金额、393×802 青玉，以及两套主题的生产控件板。
-控件板复用设置行、统计 SectionCard/MetricCard、记账分类格与四行四列键盘；这是控件检查板，不作为完整统计或设置页的截图。
+- 原稿生成字形和细线图标并无可直接提取的字体/图标源文件，当前用合法 Noto 字体及最接近的 Material 图标，算盘更重以适应小尺寸。
+- 手机尺寸较原稿更窄，保留最小触控尺寸、字号和横向分类滚动，首屏记录数随系统字号和状态栏可用高度改变；不把原稿当作固定像素大图缩放。
+- 日期使用应用既有「周六」文字，副标题仅含现有分类；没有添加原稿中的虚构二级标签。
+- `adb devices -l` 无设备，真机输入法、滑动删除手势、返回性能、厂商系统栏及覆盖安装仍需设备验证。截图只验证生产组件的原生视觉与指定状态，未声称自动点击这些流程。
 
-## 剩余 P3 与验证边界
+## 复现与检查
 
-- 参考图为生成式设计稿，未提供精确字体与所有独立素材。采用可合法嵌入的 Noto 字体及最接近的 Material 图标，部分笔画、纸纹强度和小装饰不逐像素相同。
-- 头像使用用户确定的原图；青玉参考中的红色小印章暂未加入。算盘采用适合真实小尺寸的平面清晰版本。
-- CTA 保留至少 48dp 的点击区域；大字体与窄屏允许首屏显示更少账目，列表仍可滚动。
-- 本机无已连接真机；官方模拟器因缺少可用虚拟化环境启动失败，已改用 Android Layoutlib。没有浏览器控制台检查或真机触摸、侧滑、系统弹窗、IME、厂商适配与帧率测量记录。
-- 业务逻辑没有被截图样例替代；查询、筛选、保存、删除仍由原 ViewModel/Repository 执行，另行运行原有业务单测和 Android lint。
+- 记录：`gradlew.bat :app:recordPaparazziDebug -PvisualQa --tests '*InkGoldReferenceSnapshotTest*' --tests '*Ledger*SnapshotTest*' --offline --max-workers=2`。
+- 回归：同筛选执行 `verifyPaparazziDebug`，15 项通过，日志 `.tools/ink-gold-verify-delivery.log`。
+- 对照：`python tools/compare-ink-gold.py`。
+- 单测、lint、preview 打包：`gradlew.bat :app:packageXiaozhuheng :app:testDebugUnitTest :app:lintDebug --offline --max-workers=2`，结果详见 `.tools/ink-gold-build-delivery.log`。
 
-## 实施检查表
+## 最终构建结果
 
-- [x] 独立首页布局，保留原业务回调
-- [x] 推荐主题完整视图与局部区域对照
-- [x] 明暗反向组合、窄屏、大字号、长金额检查
-- [x] 生产通用控件渲染
-- [x] 保存最终截图、基准与复现脚本
-- [ ] 真机完整操作与性能检查（需连接安卓设备）
-
-最终构建结果：47 项业务/配色单测通过，9 项截图基准验证通过；Android lint 0 错误、7 项既有警告。非调试 preview 安装包 versionName 1.1.1 / versionCode 6，签名与原安装包一致。
+- 49 项业务/配色单测通过，0失败/错误/跳过；含横向分类“全部”清除收支类型且保留关键词、跨收支分类切换用例。
+- 15 项原生截图基准回归通过；最终记录日志 `.tools/ink-gold-record-delivery.log`，回归日志 `.tools/ink-gold-verify-delivery.log`。
+- Android lint：0错误、7项既有警告、1项提示；preview 构建成功且不可调试。
+- APK：`app/build/outputs/distribution/xiaozhuheng-v1.1.2.apk`，24,801,087 bytes，versionName=1.1.2 / versionCode=7。
+- SHA-256：`c1c3afda240004d017218e0d46c0bc9bd704f9c2db85ed0ddf069efc01acb701`。
+- apksigner 验证通过；证书 SHA-256：`113b1e3be65ad53f6d05a6e0b199c9b0574f5481aed41ee750331b5b3263c145`，与原安装包一致，包名仍为 `com.example.bookkeeping`，应用名称「小珠衡」。

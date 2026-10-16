@@ -47,4 +47,8 @@ data class MonthFilter(
 
     fun withCategory(category: CategoryEntity?): MonthFilter =
         copy(categoryId = category?.id, type = category?.type ?: type)
+
+    /** 墨金横向分类中的“全部”包含收支两类，同时保留搜索词。 */
+    fun withLedgerCategory(category: CategoryEntity?): MonthFilter =
+        copy(categoryId = category?.id, type = category?.type)
 }

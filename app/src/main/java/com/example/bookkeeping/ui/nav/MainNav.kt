@@ -162,9 +162,6 @@ private fun MainPageScaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             if (route == ROUTE_HOME && !dockedAction) {
-                if (tokens.homeLayout == HomeLayout.INK_GOLD) {
-                    LedgerCreateButton(onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } }, wide = false)
-                } else {
                 ExtendedFloatingActionButton(
                     onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } },
                     icon = { Icon(themedIcon(Icons.Filled.Add, Icons.Outlined.Edit), contentDescription = null) },
@@ -173,12 +170,11 @@ private fun MainPageScaffold(
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                     shape = if (LocalThemeTokens.current.ledgerRows) RoundedCornerShape(LocalThemeTokens.current.actionCorner) else FloatingActionButtonDefaults.extendedFabShape
                 )
-                }
             }
         },
         bottomBar = {
             Column {
-                if (dockedAction && tokens.homeLayout == HomeLayout.CELADON) Surface(color = MaterialTheme.colorScheme.background) {
+                if (dockedAction && tokens.homeLayout != HomeLayout.STANDARD) Surface(color = Color.Transparent) {
                     LedgerCreateButton(onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } },
                         wide = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
                 } else if (dockedAction) Surface(color = MaterialTheme.colorScheme.background) {

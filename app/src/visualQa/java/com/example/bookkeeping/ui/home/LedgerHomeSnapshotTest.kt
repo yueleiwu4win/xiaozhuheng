@@ -56,11 +56,10 @@ class LedgerHomeSnapshotTest {
                 Scaffold(containerColor = Color.Transparent,
                     bottomBar = {
                         Column {
-                            if (jade) LedgerCreateButton({}, true, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
+                            LedgerCreateButton({}, true, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
                             LedgerNavigationBar(0) {}
                         }
-                    },
-                    floatingActionButton = { if (!jade) LedgerCreateButton({}, false) }
+                    }
                 ) { padding ->
                     Box(Modifier.fillMaxSize().padding(padding)) { Page(large) }
                 }
@@ -81,7 +80,7 @@ class LedgerHomeSnapshotTest {
         LedgerHomeContent(YearMonth.of(2026, 10), rows,
             if (large) MonthSummary(9_999_999_999_999, 4, 0, 0) else MonthSummary(202371, 4, 800000, 1),
             MonthSummary(), MonthFilter(), null, "¥", false, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-            today = LocalDate.of(2026, 10, 14)) { item ->
+            today = LocalDate.of(2026, 10, 14), categories = bills.map { it.category }) { item ->
             LedgerBillRow(item, "¥", LocalAppColors.current.income, {})
         }
     }

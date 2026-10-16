@@ -11,16 +11,13 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -70,28 +67,35 @@ internal fun LedgerHomeContent(
     onReset: () -> Unit,
     onCreate: () -> Unit,
     today: LocalDate = LocalDate.now(),
+    categories: List<com.example.bookkeeping.data.db.entity.CategoryEntity> = emptyList(),
+    onCategory: (Long?) -> Unit = {},
+    onKeyword: (String) -> Unit = {},
     billContent: @Composable (BillWithCategory) -> Unit
 ) {
-    val jade = LocalThemeTokens.current.homeLayout == HomeLayout.CELADON
+    if (LocalThemeTokens.current.homeLayout == HomeLayout.INK_GOLD) {
+        InkGoldHomeContent(yearMonth, rows, summary, filteredSummary, filter, categories, currency,
+            onKeyword, onFilters, onPreviousMonth, onNextMonth, onChooseMonth, onCurrentMonth,
+            onCategory, onReset, onCreate, today, billContent)
+        return
+    }
     BoxWithConstraints(Modifier.fillMaxSize()) {
     CompositionLocalProvider(LocalLedgerCompact provides (maxHeight < 680.dp)) {
     Column(Modifier.fillMaxSize()) {
-        LedgerHeader(jade, searchVisible, filter.isActive, onSearch, onFilters)
+        CeladonHeader(searchVisible, filter.isActive, onSearch, onFilters)
         if (searchVisible) searchContent()
         LazyColumn(
             Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp,
-                bottom = if (jade) 12.dp else 104.dp)
+                bottom = 12.dp)
         ) {
             item(key = "overview") {
-                if (jade) CeladonOverview(yearMonth, summary, currency, onPreviousMonth, onNextMonth, onChooseMonth)
-                else InkGoldOverview(yearMonth, summary, currency, onPreviousMonth, onNextMonth, onChooseMonth)
+                CeladonOverview(yearMonth, summary, currency, onPreviousMonth, onNextMonth, onChooseMonth)
                 if (yearMonth != YearMonth.from(today)) {
                     TextButton(onClick = onCurrentMonth) { Text("回到本月") }
                 }
             }
             item(key = "types") {
-                LedgerTypeBar(filter.type, jade, onType, Modifier.padding(top = if (jade) 10.dp else 0.dp))
+                CeladonTypeBar(filter.type, onType, Modifier.padding(top = 10.dp))
             }
             if (filter.isActive) item(key = "filtered") {
                 Column(Modifier.fillMaxWidth().padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -124,22 +128,20 @@ internal fun LedgerHomeContent(
 }
 
 @Composable
-private fun LedgerHeader(jade: Boolean, searching: Boolean, filtered: Boolean, onSearch: () -> Unit, onFilters: () -> Unit) {
+private fun CeladonHeader(searching: Boolean, filtered: Boolean, onSearch: () -> Unit, onFilters: () -> Unit) {
     val fontScale = LocalDensity.current.fontScale
     val compact = LocalLedgerCompact.current
-    val showAbacus = !jade && fontScale <= 1.15f
-    Row(Modifier.fillMaxWidth().heightIn(min = if (jade) { if (compact) 64.dp else 72.dp } else if (compact) 72.dp else 82.dp).padding(start = if (jade) 30.dp else 28.dp, end = 10.dp),
+    Row(Modifier.fillMaxWidth().heightIn(min = if (compact) 64.dp else 72.dp).padding(start = 30.dp, end = 10.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).offset(y = 8.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            if (jade && fontScale <= 1.6f) Box(Modifier.size(50.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer)) {
+            if (fontScale <= 1.6f) Box(Modifier.size(50.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer)) {
                 Image(painterResource(R.drawable.brand_icon_foreground), null, Modifier.fillMaxSize()
                     .graphicsLayer { scaleX = 4f; scaleY = 4f; translationY = size.height * 0.22f }, contentScale = ContentScale.Crop)
             }
             Text(stringResource(R.string.app_name), Modifier.weight(1f, fill = false),
-                style = ledgerText(if (jade) 23.sp else if (fontScale > 1.3f) 28.sp else 38.sp, FontWeight.SemiBold), maxLines = 1)
-            if (showAbacus) Image(painterResource(R.drawable.ledger_abacus_mark), null, Modifier.width(80.dp).height(32.dp),
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary), contentScale = ContentScale.Fit)
+                style = ledgerText(23.sp, FontWeight.SemiBold), maxLines = 1)
+
         }
         IconButton(onSearch, Modifier.offset(y = 8.dp)) { Icon(if (searching) Icons.Outlined.Close else Icons.Outlined.Search,
             if (searching) "关闭搜索" else "搜索备注", Modifier.size(27.dp)) }
@@ -170,22 +172,6 @@ private fun CeladonOverview(month: YearMonth, summary: MonthSummary, currency: S
                 LedgerBalance(summary, currency, centered = true, Modifier.padding(top = if (compact) 6.dp else 10.dp, bottom = 2.dp))
             }
         }
-    }
-}
-
-@Composable
-private fun InkGoldOverview(month: YearMonth, summary: MonthSummary, currency: String,
-    onPrevious: () -> Unit, onNext: () -> Unit, onChoose: () -> Unit) {
-    val compact = LocalLedgerCompact.current
-    Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp)) {
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { LedgerMonth(month, onPrevious, onNext, onChoose) }
-        Spacer(Modifier.height(4.dp))
-        Text("本月支出", style = ledgerText(18.sp), color = MaterialTheme.colorScheme.primary)
-        FittedLedgerAmount(AmountFormatter.withSymbol(summary.expenseCents, currency), if (compact) 42.sp else 46.sp,
-            Modifier.fillMaxWidth().padding(top = 0.dp, bottom = 8.dp), weight = FontWeight.SemiBold)
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        LedgerBalance(summary, currency, centered = false, Modifier.padding(vertical = 6.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
@@ -231,30 +217,17 @@ private fun LedgerBalance(summary: MonthSummary, currency: String, centered: Boo
 }
 
 @Composable
-private fun LedgerTypeBar(type: String?, jade: Boolean, onSelect: (String?) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(if (jade) 8.dp else 0.dp)) {
-            listOf(null to "全部", BillType.EXPENSE to "支出", BillType.INCOME to "收入").forEach { (value, label) ->
-                val selected = type == value
-                val color = if (jade) { if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer }
-                    else Color.Transparent
-                val tabWidth = if (jade) Modifier.weight(1f) else Modifier.width(80.dp)
-                Column(tabWidth.selectable(selected, onClick = { onSelect(value) }, role = Role.Tab)
-                    .heightIn(min = 48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.fillMaxWidth().padding(vertical = if (jade) 4.dp else 0.dp)
-                        .clip(RoundedCornerShape(if (jade) 28.dp else 0.dp)).background(color).heightIn(min = if (jade) 40.dp else 38.dp), contentAlignment = Alignment.Center) {
-                        Text(label, style = ledgerText(18.sp),
-                            color = if (jade && selected) MaterialTheme.colorScheme.onPrimary else if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-                    }
-                    if (!jade) HorizontalDivider(Modifier.fillMaxWidth(0.84f), 2.dp,
-                        if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                    if (!jade) Box(Modifier.width(16.dp).height(8.dp)) {
-                        if (selected) Icon(Icons.Filled.Bookmark, null, Modifier.requiredSize(12.dp).offset(y = (-2).dp), tint = MaterialTheme.colorScheme.primary)
-                    }
-                }
+private fun CeladonTypeBar(type: String?, onSelect: (String?) -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(null to "全部", BillType.EXPENSE to "支出", BillType.INCOME to "收入").forEach { (value, label) ->
+            val selected = type == value
+            Box(Modifier.weight(1f).selectable(selected, onClick = { onSelect(value) }, role = Role.Tab)
+                .heightIn(min = 48.dp).padding(vertical = 4.dp).clip(RoundedCornerShape(28.dp))
+                .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer)
+                .heightIn(min = 40.dp), contentAlignment = Alignment.Center) {
+                Text(label, style = ledgerText(18.sp), color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
             }
         }
-        if (!jade) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
@@ -281,15 +254,18 @@ private fun LedgerDayHeader(row: HomeRow.Header, currency: String, today: LocalD
 @Composable
 internal fun LedgerBillRow(item: BillWithCategory, currency: String, incomeColor: Color,
     onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val jade = LocalThemeTokens.current.homeLayout == HomeLayout.CELADON
+    if (LocalThemeTokens.current.homeLayout == HomeLayout.INK_GOLD) {
+        InkGoldBillRow(item, currency, onClick, modifier)
+        return
+    }
     val compact = LocalLedgerCompact.current
     val income = item.bill.type == BillType.INCOME
     Column(modifier.fillMaxWidth().clickable(onClickLabel = "编辑这笔记录", onClick = onClick)) {
         Row(Modifier.fillMaxWidth().heightIn(min = if (compact) 56.dp else 58.dp).padding(vertical = if (compact) 7.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(42.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-                val icon = if (jade && item.category.icon == "restaurant") Icons.Outlined.RamenDining
-                    else if (jade && item.category.icon == "shopping_bag") Icons.Outlined.LocalGroceryStore else categoryIcon(item.category.icon)
+                val icon = if (item.category.icon == "restaurant") Icons.Outlined.RamenDining
+                    else if (item.category.icon == "shopping_bag") Icons.Outlined.LocalGroceryStore else categoryIcon(item.category.icon)
                 Icon(icon, null, Modifier.size(26.dp), tint = MaterialTheme.colorScheme.primary)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -299,7 +275,6 @@ internal fun LedgerBillRow(item: BillWithCategory, currency: String, incomeColor
             }
             FittedLedgerAmount((if (income) "+" else "−") + AmountFormatter.withSymbol(item.bill.amountCents, currency), 18.sp,
                 Modifier.weight(1.1f), TextAlign.End, if (income) incomeColor else MaterialTheme.colorScheme.onSurface)
-            if (!jade) Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }

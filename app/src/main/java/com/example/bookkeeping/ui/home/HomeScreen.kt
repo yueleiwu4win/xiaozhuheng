@@ -172,7 +172,9 @@ fun HomeScreen(
             onChooseMonth = { monthPickerVisible = true },
             onCurrentMonth = { viewModel.setYearMonth(java.time.YearMonth.now()) },
             onType = viewModel::setTypeFilter, onClearCategory = { viewModel.setCategoryFilter(null) },
-            onReset = viewModel::resetFilters, onCreate = { onEditBill(null) }
+            onReset = viewModel::resetFilters, onCreate = { onEditBill(null) },
+            categories = categories, onCategory = viewModel::setLedgerCategoryFilter,
+            onKeyword = viewModel::setKeyword
         ) { item ->
             SwipeToRevealRow(item, currency, incomeColor, revealedBillId == item.bill.id,
                 onRevealedChange = { open -> revealedBillId = if (open) item.bill.id else 0L },

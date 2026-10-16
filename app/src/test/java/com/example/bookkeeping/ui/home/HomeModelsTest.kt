@@ -73,4 +73,17 @@ class HomeModelsTest {
         assertTrue(MonthFilter(keyword = "午餐").isActive)
         assertTrue(MonthFilter(type = BillType.INCOME).isActive)
     }
+
+    @Test fun ledgerAllCategoriesClearsTypeButPreservesKeyword() {
+        val result = MonthFilter(income.id, BillType.INCOME, "午餐").withLedgerCategory(null)
+        assertNull(result.categoryId)
+        assertNull(result.type)
+        assertEquals("午餐", result.keyword)
+    }
+
+    @Test fun ledgerCategorySwitchCanCrossIncomeExpense() {
+        val result = MonthFilter(income.id, BillType.INCOME).withLedgerCategory(expense)
+        assertEquals(expense.id, result.categoryId)
+        assertEquals(BillType.EXPENSE, result.type)
+    }
 }
