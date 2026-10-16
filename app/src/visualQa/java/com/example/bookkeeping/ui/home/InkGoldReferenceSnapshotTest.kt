@@ -32,6 +32,7 @@ class InkGoldReferenceSnapshotTest {
         paparazzi.unsafeUpdateConfig(deviceConfig = device(600, 900))
         capture()
     }
+    @Test fun readingSystemBoldOnPhoto() = capture(builtin = true, reading = ReadingOptions(ReadingSize.EXTRA_LARGE, ReadingWeight.BOLD, ReadingFont.SYSTEM, 60, true))
     @Test fun phone() = capture()
     @Test fun photoBackground() = capture(photo = true)
     @Test fun builtinBackground() = capture(builtin = true)
@@ -44,8 +45,8 @@ class InkGoldReferenceSnapshotTest {
     }
 
     private fun capture(photo: Boolean = false, initialFilter: MonthFilter = MonthFilter(), large: Boolean = false,
-        builtin: Boolean = false, mode: ThemeMode = ThemeMode.DARK) = paparazzi.snapshot {
-        BookkeepingTheme(mode, ThemeStyle.INK_GOLD) {
+        builtin: Boolean = false, mode: ThemeMode = ThemeMode.DARK, reading: ReadingOptions = ReadingOptions()) = paparazzi.snapshot {
+        BookkeepingTheme(mode, ThemeStyle.INK_GOLD, reading) {
             var filter by remember { mutableStateOf(initialFilter) }
             val selected = bills.filter { (filter.type == null || filter.type == it.bill.type) &&
                 (filter.categoryId == null || filter.categoryId == it.category.id) &&
@@ -66,7 +67,7 @@ class InkGoldReferenceSnapshotTest {
                         LedgerNavigationBar(0) {}
                     }
                 }) { padding ->
-                    Box(Modifier.fillMaxSize().padding(padding)) {
+                    Box(Modifier.fillMaxSize().padding(padding).readingSurface()) {
                         InkGoldHomeContent(YearMonth.of(2024, 10), rows,
                             if (large) MonthSummary(9_999_999_999_999, 8, 0, 0) else MonthSummary(234680, 8, 580000, 1),
                             summarizeBills(selected), filter, categories, "¥",

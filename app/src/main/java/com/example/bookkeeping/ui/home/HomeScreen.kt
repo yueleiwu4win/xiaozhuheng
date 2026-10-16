@@ -253,9 +253,8 @@ fun HomeScreen(
                         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(currency, style = MaterialTheme.typography.titleLarge, color = headlineColor,
                                 modifier = Modifier.padding(bottom = 4.dp))
-                            Text(AmountFormatter.format(summary.expenseCents),
-                                style = MaterialTheme.typography.displayMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures),
-                                color = headlineColor, modifier = Modifier.weight(1f))
+                            FittedLedgerAmount(AmountFormatter.format(summary.expenseCents), MaterialTheme.typography.displayMedium.fontSize,
+                                Modifier.weight(1f), color = headlineColor, textStyle = themeAmountStyle(MaterialTheme.typography.displayMedium))
                         }
                         }
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -294,11 +293,11 @@ fun HomeScreen(
                             }
                             Text(
                                 "支出 ${AmountFormatter.withSymbol(filteredSummary.expenseCents, currency)}",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures)
+                                style = themeAmountStyle(MaterialTheme.typography.bodyMedium)
                             )
                             Text(
                                 "收入 ${AmountFormatter.withSymbol(filteredSummary.incomeCents, currency)}",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures)
+                                style = themeAmountStyle(MaterialTheme.typography.bodyMedium)
                             )
                         }
                     }
@@ -352,8 +351,8 @@ fun HomeScreen(
 private fun SummaryValue(label: String, cents: Long, currency: String, modifier: Modifier, color: Color = MaterialTheme.colorScheme.onSurface) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(AmountFormatter.withSymbol(cents, currency),
-            style = MaterialTheme.typography.titleMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures), color = color)
+        FittedLedgerAmount(AmountFormatter.withSymbol(cents, currency), MaterialTheme.typography.titleMedium.fontSize,
+            Modifier.fillMaxWidth(), color = color, textStyle = themeAmountStyle(MaterialTheme.typography.titleMedium))
     }
 }
 
@@ -425,7 +424,7 @@ private fun SwipeToRevealRow(
 }
 
 @Composable
-private fun BillRow(
+internal fun BillRow(
     item: BillWithCategory,
     currency: String,
     incomeColor: Color,
@@ -437,6 +436,23 @@ private fun BillRow(
         return
     }
     val isIncome = item.bill.type == BillType.INCOME
+    if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.15f) {
+        Row(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)
+            .clickable(onClickLabel = "编辑这笔记录", onClick = onClick).padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            CategoryIconBox(categoryIcon(item.category.icon), item.category.color.hexToColor(), size = 40.dp, corner = 12.dp)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(item.category.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (!item.bill.note.isNullOrBlank()) Text(item.bill.note, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                FittedLedgerAmount((if (isIncome) "+" else "−") + AmountFormatter.withSymbol(item.bill.amountCents, currency),
+                    MaterialTheme.typography.titleMedium.fontSize, Modifier.fillMaxWidth(),
+                    color = if (isIncome) incomeColor else MaterialTheme.colorScheme.onSurface,
+                    textStyle = themeAmountStyle(MaterialTheme.typography.titleMedium))
+            }
+        }
+        return
+    }
     Row(
         modifier.fillMaxWidth().background(if (LocalThemeTokens.current.ledgerRows) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface)
             .ledgerDivider().clickable(onClickLabel = "编辑这笔记录", onClick = onClick)
@@ -454,7 +470,7 @@ private fun BillRow(
         }
         Text(
             (if (isIncome) "+" else "−") + AmountFormatter.withSymbol(item.bill.amountCents, currency),
-            style = MaterialTheme.typography.titleSmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures),
+            style = themeAmountStyle(MaterialTheme.typography.titleSmall),
             color = if (isIncome) incomeColor else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.widthIn(max = 160.dp)
         )

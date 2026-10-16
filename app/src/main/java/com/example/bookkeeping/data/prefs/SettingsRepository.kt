@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import java.io.IOException
@@ -53,7 +54,8 @@ data class AppSettings(
      * - "image:custom" 相册图片（文件路径固定，见 BackgroundImageStore）
      * - "image:abacus" 内置静心拨珠插画
      */
-    val background: String = BACKGROUND_SPEC_DEFAULT
+    val background: String = BACKGROUND_SPEC_DEFAULT,
+    val reading: ReadingOptions = ReadingOptions()
 )
 
 /** 上次记账使用的分类与日期（连续快速记账用，跨重启保留）。 */
@@ -83,7 +85,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
                         weekStartMonday = p[KEY_WEEK] ?: true,
                         themeMode = ThemeMode.from(p[KEY_THEME]),
                         themeStyle = ThemeStyle.from(p[KEY_STYLE]),
-                        background = p[KEY_BG] ?: BACKGROUND_SPEC_DEFAULT
+                        background = p[KEY_BG] ?: BACKGROUND_SPEC_DEFAULT,
+                        reading = ReadingOptions(ReadingSize.from(p[KEY_READING_SIZE]), ReadingWeight.from(p[KEY_READING_WEIGHT]),
+                            ReadingFont.from(p[KEY_READING_FONT]), p[KEY_BG_STRENGTH] ?: 100, p[KEY_READING_ENHANCED] ?: false).normalized()
                     )
                     _lastUsed.value = LastUsed(p[KEY_LAST_CATEGORY], p[KEY_LAST_DATE])
                     loaded.complete(Unit)
@@ -128,6 +132,17 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         context.dataStore.edit { it[KEY_BG] = spec }
     }
 
+    suspend fun setReading(options: ReadingOptions) {
+        val value = options.normalized()
+        context.dataStore.edit {
+            it[KEY_READING_SIZE] = value.size.value
+            it[KEY_READING_WEIGHT] = value.weight.value
+            it[KEY_READING_FONT] = value.font.value
+            it[KEY_BG_STRENGTH] = value.backgroundStrength
+            it[KEY_READING_ENHANCED] = value.enhanced
+        }
+    }
+
     suspend fun setLastUsed(categoryId: Long, date: String) {
         context.dataStore.edit {
             it[KEY_LAST_CATEGORY] = categoryId
@@ -144,5 +159,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val KEY_BG = stringPreferencesKey("background_spec")
         val KEY_LAST_CATEGORY = longPreferencesKey("last_category_id")
         val KEY_LAST_DATE = stringPreferencesKey("last_date")
+        val KEY_READING_SIZE = stringPreferencesKey("reading_size")
+        val KEY_READING_WEIGHT = stringPreferencesKey("reading_weight")
+        val KEY_READING_FONT = stringPreferencesKey("reading_font")
+        val KEY_BG_STRENGTH = intPreferencesKey("background_strength")
+        val KEY_READING_ENHANCED = booleanPreferencesKey("reading_enhanced")
     }
 }

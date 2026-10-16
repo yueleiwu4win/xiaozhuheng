@@ -1,6 +1,7 @@
 package com.example.bookkeeping.ui.chart
 
 import androidx.compose.foundation.Canvas
+import com.example.bookkeeping.ui.theme.readingTextStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -92,7 +93,7 @@ fun LineChart(
     val density = LocalDensity.current
     val textMeasurer: TextMeasurer = rememberTextMeasurer(cacheSize = TEXT_CACHE_SIZE)
     // 坐标轴配色跟随主题（深色模式下网格/刻度需用主题色，否则网格线不可见）
-    val axisText = TextStyle(fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val axisText = readingTextStyle(TextStyle(fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant))
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val labels = remember(series) { series.firstOrNull()?.points?.map { it.label } ?: emptyList() }
     val maxCents = remember(series) { series.flatMap { it.points }.maxOfOrNull { it.value } ?: 0L }
@@ -202,9 +203,9 @@ fun BarChart(
 ) {
     val density = LocalDensity.current
     val textMeasurer: TextMeasurer = rememberTextMeasurer(cacheSize = TEXT_CACHE_SIZE)
-    val axisText = TextStyle(fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val axisText = readingTextStyle(TextStyle(fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant))
     val gridColor = MaterialTheme.colorScheme.outlineVariant
-    val valueText = TextStyle(fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val valueText = readingTextStyle(TextStyle(fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant))
     val maxCents = remember(points) { points.maxOfOrNull { it.value } ?: 0L }
     var niceMaxCents = remember(maxCents) { (niceCeilYuan(maxCents / 100.0) * 100).toLong() }
     if (niceMaxCents <= 0L) niceMaxCents = 100L
@@ -286,6 +287,8 @@ fun DonutChart(
 ) {
     val density = LocalDensity.current
     val textMeasurer: TextMeasurer = rememberTextMeasurer(cacheSize = TEXT_CACHE_SIZE)
+    val centerTitleStyle = readingTextStyle(TextStyle(fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold))
+    val centerSubtitleStyle = readingTextStyle(TextStyle(fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface))
     val total = remember(slices) { slices.sumOf { it.value } }
     val centerTextColor = MaterialTheme.colorScheme.onSurfaceVariant
     val chartDesc = remember(slices, total) {
@@ -352,12 +355,12 @@ fun DonutChart(
         if (centerTitle.isNotEmpty()) {
             val t = textMeasurer.measure(
                 centerTitle,
-                TextStyle(fontSize = 16.sp, color = centerTextColor, fontWeight = FontWeight.SemiBold)
+                centerTitleStyle.copy(color = centerTextColor)
             )
             drawText(t, topLeft = Offset((size.width - t.size.width) / 2f, (size.height - t.size.height) / 2f - 8.dp.toPx()))
         }
         if (centerSubtitle.isNotEmpty()) {
-            val s = textMeasurer.measure(centerSubtitle, TextStyle(fontSize = 10.sp, color = centerTextColor))
+            val s = textMeasurer.measure(centerSubtitle, centerSubtitleStyle.copy(color = centerTextColor))
             drawText(s, topLeft = Offset((size.width - s.size.width) / 2f, (size.height - s.size.height) / 2f + 10.dp.toPx()))
         }
     }

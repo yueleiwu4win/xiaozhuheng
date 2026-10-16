@@ -1,6 +1,7 @@
 package com.example.bookkeeping.ui.common
 
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.LocalReadingOptions
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -165,7 +166,11 @@ internal fun AppBackgroundContent(spec: String, bitmap: ImageBitmap?, modifier: 
                 )
             }
         }
+        // 调低强度逐渐回到主题纸色，所有内置/相册/渐变背景统一处理。
+        val reduction = 1f - LocalReadingOptions.current.backgroundStrength.coerceIn(0, 100) / 100f
+        if (reduction > 0f) Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = reduction)))
     }
+
 }
 
 /** 解码背景图片（最大边 1280px，采样解码，避免大图 OOM）。 */

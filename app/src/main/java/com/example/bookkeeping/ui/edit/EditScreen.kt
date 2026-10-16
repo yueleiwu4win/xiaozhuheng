@@ -1,5 +1,9 @@
 package com.example.bookkeeping.ui.edit
 
+import com.example.bookkeeping.ui.theme.LocalReadingOptions
+import com.example.bookkeeping.ui.theme.readingTextStyle
+import com.example.bookkeeping.ui.home.FittedLedgerAmount
+import androidx.compose.ui.platform.LocalDensity
 import com.example.bookkeeping.ui.common.*
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import com.example.bookkeeping.ui.theme.HomeLayout
@@ -193,7 +197,7 @@ fun EditScreen(
     }
 
     Scaffold(
-        containerColor = if (LocalThemeTokens.current.ledgerRows) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.surface,
+        containerColor = if (LocalReadingOptions.current.enhanced) MaterialTheme.colorScheme.background.copy(alpha = 0.95f) else if (LocalThemeTokens.current.ledgerRows) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.surface,
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
@@ -237,15 +241,9 @@ fun EditScreen(
                 Text("金额", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(currency, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 4.dp))
-                    Text(
-                        display,
-                        style = MaterialTheme.typography.displayMedium.copy(
-                            fontSize = if (display.length > 10) 36.sp else 44.sp,
-                            fontFeatureSettings = AmountFontFeatures
-                        ),
+                    FittedLedgerAmount(display, if (display.length > 10) 36.sp else 44.sp, Modifier.weight(1f),
                         color = if (billType == BillType.INCOME) incomeColor else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f), maxLines = 1
-                    )
+                        textStyle = themeAmountStyle(MaterialTheme.typography.displayMedium))
                 }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("选择分类", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
@@ -253,7 +251,7 @@ fun EditScreen(
                 }
             }
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(64.dp), modifier = Modifier.weight(1f).fillMaxWidth(),
+                columns = GridCells.Adaptive(64.dp * LocalDensity.current.fontScale.coerceIn(1f, 2f)), modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -327,6 +325,7 @@ internal fun AmountKeyboard(
     onContinueOrClear: () -> Unit,
     onSave: () -> Unit
 ) {
+    val fontScale = LocalDensity.current.fontScale
     val today = LocalDate.now()
     val dateLabel = when (date) {
         today -> "今天"
@@ -339,7 +338,7 @@ internal fun AmountKeyboard(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         listOf(listOf("7", "8", "9"), listOf("4", "5", "6"), listOf("1", "2", "3"), listOf(".", "0", "back")).forEachIndexed { index, row ->
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(Modifier.fillMaxWidth().height((34f * fontScale.coerceAtMost(1.5f) + 8f).coerceAtLeast(52f).dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 row.forEach { key ->
                     Surface(
                         onClick = {
@@ -351,7 +350,8 @@ internal fun AmountKeyboard(
                     ) {
                         Box(Modifier.padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
                             if (key == "back") Icon(Icons.AutoMirrored.Filled.Backspace, "退格，删除最后一位", Modifier.size(24.dp))
-                            else Text(key, style = MaterialTheme.typography.headlineMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures))
+                            else Text(key, style = readingTextStyle(MaterialTheme.typography.headlineMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures,
+                                fontSize = MaterialTheme.typography.headlineMedium.fontSize * (1.5f / fontScale).coerceAtMost(1f))))
                         }
                     }
                 }
@@ -388,8 +388,11 @@ internal fun AmountKeyboard(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
-                        subtitle?.let { Text(it, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+                        if (fontScale <= 1.15f) Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                        else FittedLedgerAmount(label, MaterialTheme.typography.titleSmall.fontSize, Modifier.fillMaxWidth(), TextAlign.Center,
+                            color = LocalContentColor.current, textStyle = MaterialTheme.typography.titleSmall,
+                            minSize = (12f / fontScale).coerceAtMost(10f).sp)
+                        if (fontScale <= 1.15f) subtitle?.let { Text(it, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
                     }
                 }
             }

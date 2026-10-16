@@ -13,6 +13,7 @@ import com.example.bookkeeping.data.prefs.BackgroundImageStore
 import com.example.bookkeeping.data.prefs.SettingsRepository
 import com.example.bookkeeping.data.prefs.ThemeMode
 import com.example.bookkeeping.data.prefs.ThemeStyle
+import com.example.bookkeeping.data.prefs.ReadingOptions
 import com.example.bookkeeping.data.repo.BackupRepository
 import com.example.bookkeeping.data.repo.BillRepository
 import com.example.bookkeeping.data.repo.CategoryRepository
@@ -133,6 +134,14 @@ class SettingsViewModel(
             try { settingsRepository.setThemeStyle(style) }
             catch (e: CancellationException) { throw e }
             catch (_: Exception) { _result.value = ExportResult(false, "主题保存失败，请重试") }
+        }
+    }
+
+    fun setReading(options: ReadingOptions) {
+        viewModelScope.launch {
+            try { settingsRepository.setReading(options) }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { _result.value = ExportResult(false, "阅读设置保存失败，请重试") }
         }
     }
 

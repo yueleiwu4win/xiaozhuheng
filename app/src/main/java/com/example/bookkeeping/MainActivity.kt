@@ -77,7 +77,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 CompositionLocalProvider(LocalBackgroundSpec provides settings.background) {
-                    BookkeepingTheme(theme, settings.themeStyle) {
+                    BookkeepingTheme(theme, settings.themeStyle, settings.reading) {
                         if (startup.ready) {
                             MainNav()
                             SideEffect { firstContentPrepared = true }

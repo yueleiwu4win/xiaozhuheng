@@ -99,6 +99,7 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
                     SectionCard("外观") {
                         SettingRow("界面风格", themedIcon(Icons.Filled.Palette, Icons.Outlined.Palette), value = settings.themeStyle.label, enabled = !busy) { panel = "style" }
                         SettingRow("明暗模式", themedIcon(Icons.Filled.Palette, Icons.Outlined.Palette), value = themeLabel, enabled = !busy) { panel = "theme" }
+                        SettingRow("文字与阅读", Icons.Outlined.TextFields, value = if (settings.reading == ReadingOptions()) "跟随主题" else "已自定义", enabled = !busy) { panel = "reading" }
                         SettingRow("背景", themedIcon(Icons.Filled.Image, Icons.Outlined.Image), value = backgroundLabel, enabled = !busy) { panel = "background" }
                         SettingRow("显示币种", themedIcon(Icons.Filled.Payments, Icons.Outlined.Payments), value = CURRENCIES[settings.currency] ?: settings.currency, enabled = !busy) { panel = "currency" }
                     }
@@ -135,7 +136,10 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
             }
         }
     }
-    panel?.let { current ->
+    if (panel == "reading") ReadingSettingsSheet(settings, onApply = {
+        viewModel.setReading(it); panel = null
+    }, onDismiss = { panel = null })
+    panel?.takeIf { it != "reading" }?.let { current ->
         ModalBottomSheet(onDismissRequest = { panel = null }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import com.example.bookkeeping.ui.theme.HomeLayout
 import com.example.bookkeeping.ui.theme.LedgerTypeface
+import com.example.bookkeeping.ui.theme.readingTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import com.example.bookkeeping.util.CategoryIcons
@@ -99,10 +100,10 @@ fun themedIcon(classic: ImageVector, outlined: ImageVector): ImageVector =
     if (LocalThemeTokens.current.outlinedIcons) outlined else classic
 
 @Composable
-fun themeAmountStyle(base: TextStyle): TextStyle = base.copy(
+fun themeAmountStyle(base: TextStyle): TextStyle = readingTextStyle(base.copy(
     fontFamily = if (LocalThemeTokens.current.homeLayout == HomeLayout.STANDARD) FontFamily.SansSerif else LedgerTypeface,
     fontFeatureSettings = "tnum"
-)
+))
 
 /** 同一纸纤维素材由不同主题以低透明度使用，不将整页参考图当背景。 */
 @Composable

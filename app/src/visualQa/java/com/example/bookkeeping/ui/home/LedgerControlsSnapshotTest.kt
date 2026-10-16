@@ -14,6 +14,7 @@ import com.android.resources.Density
 import com.example.bookkeeping.data.db.entity.CategoryEntity
 import com.example.bookkeeping.data.prefs.ThemeMode
 import com.example.bookkeeping.data.prefs.ThemeStyle
+import com.example.bookkeeping.data.prefs.*
 import com.example.bookkeeping.ui.common.*
 import com.example.bookkeeping.ui.edit.AmountKeyboard
 import com.example.bookkeeping.ui.edit.CategoryCell
@@ -28,13 +29,16 @@ class LedgerControlsSnapshotTest {
     @get:Rule val paparazzi = Paparazzi(deviceConfig = DeviceConfig(screenWidth = 393, screenHeight = 850,
         xdpi = 160, ydpi = 160, density = Density.MEDIUM, softButtons = false, locale = "zh-rCN"))
 
+    @Test fun classicLargeReading() = render(ThemeStyle.CLASSIC, ThemeMode.LIGHT,
+        ReadingOptions(ReadingSize.EXTRA_LARGE, ReadingWeight.BOLD, ReadingFont.SERIF, 40, true))
+    @Test fun songClearReading() = render(ThemeStyle.SONG, ThemeMode.LIGHT, ReadingOptions.Clear)
     @Test fun songControls() = render(ThemeStyle.SONG, ThemeMode.LIGHT)
     @Test fun songDarkControls() = render(ThemeStyle.SONG, ThemeMode.DARK)
     @Test fun celadonControls() = render(ThemeStyle.CELADON, ThemeMode.LIGHT)
     @Test fun inkGoldControls() = render(ThemeStyle.INK_GOLD, ThemeMode.DARK)
 
-    private fun render(style: ThemeStyle, mode: ThemeMode) = paparazzi.snapshot {
-        BookkeepingTheme(mode, style) {
+    private fun render(style: ThemeStyle, mode: ThemeMode, reading: ReadingOptions = ReadingOptions()) = paparazzi.snapshot {
+        BookkeepingTheme(mode, style, reading) {
             Box(Modifier.fillMaxSize()) {
                 AppBackground(Modifier.fillMaxSize())
                 Column(Modifier.fillMaxSize()) {

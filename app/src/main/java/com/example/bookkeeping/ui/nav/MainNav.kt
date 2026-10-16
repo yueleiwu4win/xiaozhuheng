@@ -5,6 +5,7 @@ import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import com.example.bookkeeping.ui.theme.HomeActionPlacement
 import com.example.bookkeeping.ui.theme.SelectionStyle
 import com.example.bookkeeping.ui.theme.HomeLayout
+import com.example.bookkeeping.ui.theme.readingSurface
 import com.example.bookkeeping.ui.home.LedgerNavigationBar
 import com.example.bookkeeping.ui.home.LedgerCreateButton
 import com.example.bookkeeping.ui.home.SongCreateAction
@@ -220,7 +221,7 @@ private fun MainPageScaffold(
             }
         }
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) { content() }
+        Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).readingSurface()) { content() }
     }
 }
 

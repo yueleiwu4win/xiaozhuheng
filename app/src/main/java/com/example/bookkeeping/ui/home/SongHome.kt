@@ -38,6 +38,7 @@ import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_DEFAULT
 import com.example.bookkeeping.data.repo.BillType
 import com.example.bookkeeping.ui.common.*
 import com.example.bookkeeping.ui.theme.LocalAppDark
+import com.example.bookkeeping.ui.theme.readingArtworkAlpha
 import com.example.bookkeeping.util.AmountFormatter
 import com.example.bookkeeping.util.DateUtils
 import java.time.LocalDate
@@ -104,7 +105,7 @@ private fun SongMasthead(month: YearMonth, searching: Boolean, filtered: Boolean
                     val edgeMask = Brush.verticalGradient(0f to Color.Black, 0.7f to Color.Black, 1f to Color.Transparent)
                     onDrawWithContent { drawContent(); drawRect(edgeMask, blendMode = BlendMode.DstIn) }
                 }, contentScale = ContentScale.Crop, alignment = Alignment.BottomCenter,
-            alpha = if (LocalAppDark.current) 0.14f else 0.85f)
+            alpha = (if (LocalAppDark.current) 0.14f else 0.85f) * readingArtworkAlpha())
         Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp)) {
             Row(Modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically) {
                 Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -190,7 +191,7 @@ private fun SongDayHeader(row: HomeRow.Header, today: LocalDate) {
     val label = "$prefix${if (date.year != today.year) "${date.year}年" else ""}${date.monthValue}月${date.dayOfMonth}日 ${DateUtils.weekdayLabel(date)}"
     Row(Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 0.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(label, style = ledgerText(15.sp), modifier = Modifier.weight(1f, fill = false))
+        Text(label, style = ledgerText(15.sp), modifier = Modifier.weight(if (LocalDensity.current.fontScale > 1.15f) 4f else 1f, fill = false))
         HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
@@ -222,7 +223,7 @@ internal fun SongCreateAction(onClick: () -> Unit, modifier: Modifier = Modifier
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
         if (LocalBackgroundSpec.current == BACKGROUND_SPEC_DEFAULT && LocalDensity.current.fontScale <= 1.3f) {
             Image(painterResource(R.drawable.song_brush_rest), null, Modifier.width(100.dp).height(42.dp),
-                contentScale = ContentScale.Fit, alpha = if (LocalAppDark.current) 0.55f else 1f)
+                contentScale = ContentScale.Fit, alpha = (if (LocalAppDark.current) 0.55f else 1f) * readingArtworkAlpha())
             Spacer(Modifier.width(10.dp))
         }
         Surface(onClick, Modifier.widthIn(min = 148.dp).heightIn(min = 48.dp), shape = RoundedCornerShape(5.dp),

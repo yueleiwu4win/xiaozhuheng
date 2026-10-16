@@ -58,7 +58,7 @@ data class ThemeDefinition(
     val tokens: ThemeTokens
 )
 
-private val SongHeadings = FontFamily(Font(R.font.song_headings, FontWeight.SemiBold))
+internal val SongHeadings = FontFamily(Font(R.font.song_headings, FontWeight.SemiBold))
 val LedgerTypeface = FontFamily(
     Font(R.font.ledger_text, FontWeight.Normal),
     Font(R.font.song_headings, FontWeight.SemiBold)

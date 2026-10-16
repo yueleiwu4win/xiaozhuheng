@@ -49,6 +49,7 @@ class ImportManager(
         settings.themeMode?.let { settingsRepository.setThemeMode(ThemeMode.from(it)) }
         // 恢复使用备份中的明暗模式，不套用首次选择主题时的推荐值。
         settings.themeStyle?.let { settingsRepository.setThemeStyle(ThemeStyle.from(it), applyRecommendation = false) }
+        settings.reading?.let { settingsRepository.setReading(it) }
         var note = ""
         settings.background?.let { spec ->
             val usable = when {

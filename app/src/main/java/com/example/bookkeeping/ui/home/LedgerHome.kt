@@ -165,7 +165,7 @@ private fun CeladonOverview(month: YearMonth, summary: MonthSummary, currency: S
         Box(Modifier.fillMaxWidth()) {
             LedgerPaper(Modifier.matchParentSize(), 0.15f)
             Image(painterResource(R.drawable.guofeng_bamboo), null, Modifier.align(Alignment.TopEnd).width(230.dp).height(220.dp),
-                alignment = Alignment.TopEnd, contentScale = ContentScale.FillWidth, alpha = 0.24f)
+                alignment = Alignment.TopEnd, contentScale = ContentScale.FillWidth, alpha = 0.24f * readingArtworkAlpha())
             Column(Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = if (compact) 8.dp else 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 val monthModifier = if (LocalDensity.current.fontScale > 1.15f) Modifier.fillMaxWidth()
                     else Modifier.align(Alignment.Start).offset(x = (-12).dp).width(200.dp)
@@ -290,31 +290,33 @@ internal fun LedgerBillRow(item: BillWithCategory, currency: String, incomeColor
     }
 }
 
-internal fun ledgerText(size: TextUnit, weight: FontWeight = FontWeight.Normal) = TextStyle(
+@Composable
+internal fun ledgerText(size: TextUnit, weight: FontWeight = FontWeight.Normal) = readingTextStyle(TextStyle(
     fontFamily = LedgerTypeface, fontWeight = weight, fontSize = size, lineHeight = size * 1.35f,
     fontFeatureSettings = AmountFontFeatures
-)
+))
 
 /** 数字保持完整；按实际字体和可用宽度测量，也覆盖大金额、窄屏和系统大字体。 */
 @Composable
 internal fun FittedLedgerAmount(text: String, preferredSize: TextUnit, modifier: Modifier = Modifier,
-    align: TextAlign = TextAlign.Start, color: Color = MaterialTheme.colorScheme.onSurface, weight: FontWeight = FontWeight.Normal) {
+    align: TextAlign = TextAlign.Start, color: Color = MaterialTheme.colorScheme.onSurface, weight: FontWeight = FontWeight.Normal, textStyle: TextStyle? = null, minSize: TextUnit = 10.sp) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
+    val baseStyle = readingTextStyle(textStyle ?: ledgerText(preferredSize, weight))
     BoxWithConstraints(modifier) {
         val width = constraints.maxWidth
-        val size = remember(text, preferredSize, width, density.fontScale, density.density, measurer, weight) {
-            var low = 10f
+        val size = remember(text, preferredSize, width, density.fontScale, density.density, measurer, weight, baseStyle, minSize) {
+            var low = minSize.value
             var high = preferredSize.value
             repeat(7) {
                 val candidate = (low + high) / 2
-                if (measurer.measure(text, ledgerText(candidate.sp, weight), maxLines = 1, softWrap = false).size.width <= width)
+                if (measurer.measure(text, baseStyle.copy(fontSize = candidate.sp, lineHeight = candidate.sp * 1.35f), maxLines = 1, softWrap = false).size.width <= width)
                     low = candidate else high = candidate
             }
             low
         }
-        val fitsOnOneLine = measurer.measure(text, ledgerText(size.sp, weight), maxLines = 1, softWrap = false).size.width <= width
-        Text(text, Modifier.fillMaxWidth(), style = ledgerText(size.sp, weight), textAlign = align, color = color,
+        val fitsOnOneLine = measurer.measure(text, baseStyle.copy(fontSize = size.sp, lineHeight = size.sp * 1.35f), maxLines = 1, softWrap = false).size.width <= width
+        Text(text, Modifier.fillMaxWidth(), style = baseStyle.copy(fontSize = size.sp, lineHeight = size.sp * 1.35f), textAlign = align, color = color,
             maxLines = if (fitsOnOneLine) 1 else Int.MAX_VALUE, softWrap = !fitsOnOneLine)
     }
 }

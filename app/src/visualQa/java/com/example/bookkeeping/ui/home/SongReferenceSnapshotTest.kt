@@ -28,6 +28,8 @@ class SongReferenceSnapshotTest {
         paparazzi.unsafeUpdateConfig(deviceConfig = device(390, 844))
         capture()
     }
+    @Test fun readingClearOnPhoto() = capture(builtin = true, reading = ReadingOptions.Clear)
+    @Test fun readingSerifBold() = capture(reading = ReadingOptions(ReadingSize.EXTRA_LARGE, ReadingWeight.BOLD, ReadingFont.SERIF))
     @Test fun dark() = capture(mode = ThemeMode.DARK)
     @Test fun builtinPhoto() = capture(builtin = true)
     @Test fun filtered() = capture(initialFilter = MonthFilter(1, "expense", "午餐"))
@@ -38,8 +40,8 @@ class SongReferenceSnapshotTest {
     }
 
     private fun capture(initialFilter: MonthFilter = MonthFilter(), large: Boolean = false,
-        builtin: Boolean = false, mode: ThemeMode = ThemeMode.LIGHT) = paparazzi.snapshot {
-        BookkeepingTheme(mode, ThemeStyle.SONG) {
+        builtin: Boolean = false, mode: ThemeMode = ThemeMode.LIGHT, reading: ReadingOptions = ReadingOptions()) = paparazzi.snapshot {
+        BookkeepingTheme(mode, ThemeStyle.SONG, reading) {
             CompositionLocalProvider(LocalBackgroundSpec provides if (builtin) BACKGROUND_SPEC_ABACUS else BACKGROUND_SPEC_DEFAULT) {
                 var filter by remember { mutableStateOf(initialFilter) }
                 val selected = bills.filter { (filter.type == null || filter.type == it.bill.type) &&
@@ -56,7 +58,7 @@ class SongReferenceSnapshotTest {
                             LedgerNavigationBar(0) {}
                         }
                     }) { padding ->
-                        Box(Modifier.fillMaxSize().padding(padding)) {
+                        Box(Modifier.fillMaxSize().padding(padding).readingSurface()) {
                             SongHomeContent(YearMonth.of(2026, 10), rows,
                                 if (large) MonthSummary(9_999_999_999_999, 5, 0, 0) else MonthSummary(234680, 5, 580000, 1),
                                 summarizeBills(selected), filter, categories.firstOrNull { it.id == filter.categoryId }?.name, "¥", filter.keyword.isNotBlank(),

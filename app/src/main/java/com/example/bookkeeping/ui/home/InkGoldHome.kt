@@ -217,22 +217,23 @@ private fun InkGoldSummary(summary: MonthSummary, currency: String) {
 private fun InkGoldHeadline(cents: Long, currency: String, preferredSize: Float) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
+    val baseStyle = ledgerText(preferredSize.sp)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         fun label(size: Float) = buildAnnotatedString {
             append(if (currency == "¥") AmountFormatter.format(cents) else AmountFormatter.withSymbol(cents, currency))
             if (currency == "¥") withStyle(SpanStyle(fontSize = (size * 0.33f).coerceAtLeast(10f).sp)) { append(" 元") }
         }
-        val size = remember(cents, currency, preferredSize, constraints.maxWidth, density.fontScale, density.density, measurer) {
+        val size = remember(cents, currency, preferredSize, constraints.maxWidth, density.fontScale, density.density, measurer, baseStyle) {
             var low = 10f
             var high = preferredSize
             repeat(7) {
                 val next = (low + high) / 2
-                if (measurer.measure(label(next), ledgerText(next.sp), softWrap = false).size.width <= constraints.maxWidth) low = next
+                if (measurer.measure(label(next), baseStyle.copy(fontSize = next.sp, lineHeight = next.sp * 1.35f), softWrap = false).size.width <= constraints.maxWidth) low = next
                 else high = next
             }
             low
         }
-        Text(label(size), style = ledgerText(size.sp).copy(lineHeight = size.sp,
+        Text(label(size), style = baseStyle.copy(fontSize = size.sp, lineHeight = size.sp,
             platformStyle = PlatformTextStyle(includeFontPadding = false),
             lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both)))
     }

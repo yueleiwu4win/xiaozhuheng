@@ -1,5 +1,6 @@
 package com.example.bookkeeping.ui.category
 
+import com.example.bookkeeping.ui.theme.LocalReadingOptions
 import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -97,7 +98,7 @@ fun CategoryScreen(
     }
 
     Scaffold(
-        containerColor = Color.Transparent, snackbarHost = { SnackbarHost(snackbar) },
+        containerColor = if (LocalReadingOptions.current.enhanced) MaterialTheme.colorScheme.background.copy(alpha = 0.95f) else Color.Transparent, snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(title = { Text("分类管理") }, navigationIcon = {
                 IconButton(onClick = onBack, enabled = !busy && draggedId == null) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") }

@@ -10,6 +10,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import com.example.bookkeeping.data.prefs.ReadingOptions
 import com.example.bookkeeping.data.prefs.ThemeMode
 import com.example.bookkeeping.data.prefs.ThemeStyle
 
@@ -98,12 +101,18 @@ fun ThemeMode.isDark(): Boolean = when (this) {
 fun BookkeepingTheme(
     themeMode: ThemeMode,
     themeStyle: ThemeStyle = ThemeStyle.CLASSIC,
+    reading: ReadingOptions = ReadingOptions(),
     content: @Composable () -> Unit
 ) {
+    val baseDensity = LocalReadingBaseDensity.current ?: LocalDensity.current
+    val scaledDensity = Density(baseDensity.density, baseDensity.fontScale * reading.size.scale)
     val dark = themeMode.isDark()
     val definition = ThemeRegistry.resolve(themeStyle)
     val palette = if (dark) definition.dark else definition.light
     CompositionLocalProvider(
+        LocalReadingBaseDensity provides baseDensity,
+        LocalDensity provides scaledDensity,
+        LocalReadingOptions provides reading.normalized(),
         LocalAppColors provides if (dark) DarkAppColors else LightAppColors,
         LocalAppDark provides dark,
         LocalThemeTokens provides definition.tokens,
@@ -112,7 +121,7 @@ fun BookkeepingTheme(
     ) {
         MaterialTheme(
             colorScheme = palette,
-            typography = definition.typography,
+            typography = definition.typography.withReading(reading),
             shapes = definition.shapes,
             content = content
         )
