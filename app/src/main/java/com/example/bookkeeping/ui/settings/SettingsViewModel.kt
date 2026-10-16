@@ -8,6 +8,7 @@ import com.example.bookkeeping.data.export.ImportManager
 import com.example.bookkeeping.data.export.PreparedBackup
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_CUSTOM_IMAGE
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_DEFAULT
+import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_ABACUS
 import com.example.bookkeeping.data.prefs.BackgroundImageStore
 import com.example.bookkeeping.data.prefs.SettingsRepository
 import com.example.bookkeeping.data.prefs.ThemeMode
@@ -138,8 +139,8 @@ class SettingsViewModel(
     /** 设置背景预设（key = "default" 或 BackgroundPreset.key）。 */
     fun setBackgroundPreset(key: String) {
         viewModelScope.launch {
-            val spec = if (key == BACKGROUND_SPEC_DEFAULT) {
-                BACKGROUND_SPEC_DEFAULT
+            val spec = if (key == BACKGROUND_SPEC_DEFAULT || key == BACKGROUND_SPEC_ABACUS) {
+                key
             } else {
                 BackgroundPresets.firstOrNull { it.key == key }?.spec() ?: BACKGROUND_SPEC_DEFAULT
             }

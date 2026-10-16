@@ -83,6 +83,7 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
     val themeLabel = when (settings.themeMode) { ThemeMode.SYSTEM -> "跟随系统"; ThemeMode.LIGHT -> "浅色"; ThemeMode.DARK -> "深色" }
     val backgroundLabel = when (settings.background) {
         BACKGROUND_SPEC_DEFAULT -> "主题默认"
+        BACKGROUND_SPEC_ABACUS -> "静心拨珠"
         BACKGROUND_SPEC_CUSTOM_IMAGE -> "相册图片"
         else -> BackgroundPresets.firstOrNull { it.spec() == settings.background }?.label ?: "自定义"
     }
@@ -153,6 +154,7 @@ fun SettingsScreen(onOpenCategories: () -> Unit, viewModel: SettingsViewModel = 
                     }
                     "background" -> {
                         ChoiceRow("主题默认", settings.background == BACKGROUND_SPEC_DEFAULT, !busy) { viewModel.setBackgroundPreset("default"); panel = null }
+                        ChoiceRow("静心拨珠", settings.background == BACKGROUND_SPEC_ABACUS, !busy) { viewModel.setBackgroundPreset(BACKGROUND_SPEC_ABACUS); panel = null }
                         BackgroundPresets.forEach { preset ->
                             ChoiceRow(preset.label, settings.background == preset.spec(), !busy) { viewModel.setBackgroundPreset(preset.key); panel = null }
                         }

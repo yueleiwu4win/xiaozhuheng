@@ -17,6 +17,7 @@ import com.example.bookkeeping.data.db.entity.CategoryEntity
 import com.example.bookkeeping.data.prefs.*
 import com.example.bookkeeping.ui.common.AppBackground
 import com.example.bookkeeping.ui.common.AppBackgroundContent
+import com.example.bookkeeping.ui.common.LocalBackgroundSpec
 import com.example.bookkeeping.ui.theme.*
 import org.junit.Rule
 import org.junit.Test
@@ -33,6 +34,8 @@ class InkGoldReferenceSnapshotTest {
     }
     @Test fun phone() = capture()
     @Test fun photoBackground() = capture(photo = true)
+    @Test fun builtinBackground() = capture(builtin = true)
+    @Test fun builtinBackgroundLight() = capture(builtin = true, mode = ThemeMode.LIGHT)
     @Test fun categoryAndSearch() = capture(initialFilter = MonthFilter(1, "expense", "餐"))
     @Test fun emptySearch() = capture(initialFilter = MonthFilter(keyword = "未找到"))
     @Test fun largeFont() {
@@ -40,8 +43,9 @@ class InkGoldReferenceSnapshotTest {
         capture(large = true)
     }
 
-    private fun capture(photo: Boolean = false, initialFilter: MonthFilter = MonthFilter(), large: Boolean = false) = paparazzi.snapshot {
-        BookkeepingTheme(ThemeMode.DARK, ThemeStyle.INK_GOLD) {
+    private fun capture(photo: Boolean = false, initialFilter: MonthFilter = MonthFilter(), large: Boolean = false,
+        builtin: Boolean = false, mode: ThemeMode = ThemeMode.DARK) = paparazzi.snapshot {
+        BookkeepingTheme(mode, ThemeStyle.INK_GOLD) {
             var filter by remember { mutableStateOf(initialFilter) }
             val selected = bills.filter { (filter.type == null || filter.type == it.bill.type) &&
                 (filter.categoryId == null || filter.categoryId == it.category.id) &&
@@ -53,7 +57,9 @@ class InkGoldReferenceSnapshotTest {
                 if (photo) {
                     val bitmap = remember { requireNotNull(BitmapFactory.decodeFile(File("../docs/design/guofeng/ink-gold-photo-fixture.png").absolutePath)).asImageBitmap() }
                     AppBackgroundContent(BACKGROUND_SPEC_CUSTOM_IMAGE, bitmap, Modifier.fillMaxSize())
-                } else AppBackground(Modifier.fillMaxSize())
+                } else CompositionLocalProvider(LocalBackgroundSpec provides if (builtin) BACKGROUND_SPEC_ABACUS else BACKGROUND_SPEC_DEFAULT) {
+                    AppBackground(Modifier.fillMaxSize())
+                }
                 Scaffold(containerColor = Color.Transparent, bottomBar = {
                     Column {
                         LedgerCreateButton({}, true, Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))

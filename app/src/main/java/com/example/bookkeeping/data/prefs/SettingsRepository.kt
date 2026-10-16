@@ -25,6 +25,9 @@ const val BACKGROUND_SPEC_DEFAULT = "default"
 /** 背景设置取值：相册自定义图片。 */
 const val BACKGROUND_SPEC_CUSTOM_IMAGE = "image:custom"
 
+/** 内置汉服算盘插画，不依赖相册文件。 */
+const val BACKGROUND_SPEC_ABACUS = "image:abacus"
+
 /** 主题模式：system | light | dark */
 enum class ThemeMode(val value: String) {
     SYSTEM("system"),
@@ -48,6 +51,7 @@ data class AppSettings(
      * - "default" 跟随主题底色
      * - "gradient:FFxxxxxx:FFxxxxxx" 预设渐变
      * - "image:custom" 相册图片（文件路径固定，见 BackgroundImageStore）
+     * - "image:abacus" 内置静心拨珠插画
      */
     val background: String = BACKGROUND_SPEC_DEFAULT
 )

@@ -63,3 +63,12 @@ final result: passed
 - APK：`app/build/outputs/distribution/xiaozhuheng-v1.1.2.apk`，24,801,087 bytes，versionName=1.1.2 / versionCode=7。
 - SHA-256：`c1c3afda240004d017218e0d46c0bc9bd704f9c2db85ed0ddf069efc01acb701`。
 - apksigner 验证通过；证书 SHA-256：`113b1e3be65ad53f6d05a6e0b199c9b0574f5481aed41ee750331b5b3263c145`，与原安装包一致，包名仍为 `com.example.bookkeeping`，应用名称「小珠衡」。
+
+## 1.1.3 内置背景补充检查
+
+- 用户请求将图片加入内置背景。原图 `codex-clipboard-6c8c4364-4a76-44af-9f96-4e2c515292e6.png` 完整复制为 `app/src/main/res/drawable-nodpi/background_abacus.png`，941×1672，SHA-256 比对完全一致；没有重绘、裁改或替换原图。
+- 「设置 → 外观 → 背景 → 静心拨珠」选中 `image:abacus`。生产 AppBackground 直接绘制包内资源，复用原先照片背景的 Crop 与浅深色蒙层；不依赖相册和 custom.jpg。
+- 已打开并检查新增原生截图：`app/src/test/snapshots/images/com.example.bookkeeping.ui.home_InkGoldReferenceSnapshotTest_builtinBackground.png`、`builtinBackgroundLight.png`（后一张同前缀），均为393×850、160dpi，深/浅色各一；主体、铺满与蒙层显示正确，与前一版相册背景使用同一排版/状态。亮度属于现有照片背景行为。
+- 两项新增截图记录及基准回归通过：`.tools/background-record.log`、`.tools/background-verify.log`。前述1.1.2完整原稿对照仍为历史验收，本次仅新增内置背景选项。
+- 备份恢复识别此内置标识为可用资源；已进行调用代码核对。未进行真机点选与安装测试。
+- 1.1.3 构建与49项单测通过；lint 0错误、7项既有警告、1项提示。版本code8、同包名原签名、preview不可调试；APK 26,749,591 bytes，SHA-256 `1440d8a042cae48bf6c2e5961db2cd9611653df9e712e3a05efea6349e218262`。交付包在 `app/build/outputs/distribution/xiaozhuheng-v1.1.3.apk`。

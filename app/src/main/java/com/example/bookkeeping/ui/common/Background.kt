@@ -25,6 +25,7 @@ import com.example.bookkeeping.ui.theme.HomeLayout
 import com.example.bookkeeping.R
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_CUSTOM_IMAGE
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_DEFAULT
+import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_ABACUS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -126,9 +127,12 @@ internal fun AppBackgroundContent(spec: String, bitmap: ImageBitmap?, modifier: 
                 }
             }
 
-            spec == BACKGROUND_SPEC_CUSTOM_IMAGE -> {
+            spec == BACKGROUND_SPEC_CUSTOM_IMAGE || spec == BACKGROUND_SPEC_ABACUS -> {
                 val img = bitmap
-                if (img != null) {
+                if (spec == BACKGROUND_SPEC_ABACUS) {
+                    Image(painterResource(R.drawable.background_abacus), null,
+                        Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                } else if (img != null) {
                     Image(
                         bitmap = img,
                         contentDescription = null,

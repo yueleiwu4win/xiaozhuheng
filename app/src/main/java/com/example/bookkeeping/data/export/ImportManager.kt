@@ -53,6 +53,7 @@ class ImportManager(
         settings.background?.let { spec ->
             val usable = when {
                 spec == BACKGROUND_SPEC_DEFAULT -> true
+                spec == BACKGROUND_SPEC_ABACUS -> true
                 Regex("^gradient:[0-9A-Fa-f]{8}:[0-9A-Fa-f]{8}$").matches(spec) -> true
                 spec == BACKGROUND_SPEC_CUSTOM_IMAGE -> File(context.filesDir, "backgrounds/custom.jpg").exists()
                 else -> false
