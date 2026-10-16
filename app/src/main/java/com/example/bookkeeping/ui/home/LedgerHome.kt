@@ -72,6 +72,12 @@ internal fun LedgerHomeContent(
     onKeyword: (String) -> Unit = {},
     billContent: @Composable (BillWithCategory) -> Unit
 ) {
+    if (LocalThemeTokens.current.homeLayout == HomeLayout.SONG) {
+        SongHomeContent(yearMonth, rows, summary, filteredSummary, filter, categoryName, currency, searchVisible,
+            onSearch, onFilters, searchContent, onPreviousMonth, onNextMonth, onChooseMonth, onCurrentMonth,
+            onType, onClearCategory, onReset, onCreate, today, billContent)
+        return
+    }
     if (LocalThemeTokens.current.homeLayout == HomeLayout.INK_GOLD) {
         InkGoldHomeContent(yearMonth, rows, summary, filteredSummary, filter, categories, currency,
             onKeyword, onFilters, onPreviousMonth, onNextMonth, onChooseMonth, onCurrentMonth,
@@ -254,6 +260,10 @@ private fun LedgerDayHeader(row: HomeRow.Header, currency: String, today: LocalD
 @Composable
 internal fun LedgerBillRow(item: BillWithCategory, currency: String, incomeColor: Color,
     onClick: () -> Unit, modifier: Modifier = Modifier) {
+    if (LocalThemeTokens.current.homeLayout == HomeLayout.SONG) {
+        SongBillRow(item, currency, incomeColor, onClick, modifier)
+        return
+    }
     if (LocalThemeTokens.current.homeLayout == HomeLayout.INK_GOLD) {
         InkGoldBillRow(item, currency, onClick, modifier)
         return

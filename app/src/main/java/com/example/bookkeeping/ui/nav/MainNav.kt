@@ -7,6 +7,7 @@ import com.example.bookkeeping.ui.theme.SelectionStyle
 import com.example.bookkeeping.ui.theme.HomeLayout
 import com.example.bookkeeping.ui.home.LedgerNavigationBar
 import com.example.bookkeeping.ui.home.LedgerCreateButton
+import com.example.bookkeeping.ui.home.SongCreateAction
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
@@ -174,7 +175,9 @@ private fun MainPageScaffold(
         },
         bottomBar = {
             Column {
-                if (dockedAction && tokens.homeLayout != HomeLayout.STANDARD) Surface(color = Color.Transparent) {
+                if (dockedAction && tokens.homeLayout == HomeLayout.SONG) {
+                    SongCreateAction(onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } })
+                } else if (dockedAction && tokens.homeLayout != HomeLayout.STANDARD) Surface(color = Color.Transparent) {
                     LedgerCreateButton(onClick = { navController.navigate("edit?billId=-1") { launchSingleTop = true } },
                         wide = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
                 } else if (dockedAction) Surface(color = MaterialTheme.colorScheme.background) {

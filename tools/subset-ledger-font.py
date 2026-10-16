@@ -23,3 +23,19 @@ for entry in font['name'].names:
 output = Path('app/src/main/res/font/ledger_text.ttf')
 font.save(output)
 print('Ledger font bytes:', output.stat().st_size)
+
+# 标题使用600字重；资源字符串也必须收录（品牌名位于strings.xml）。
+heading = TTFont('.tools/fonts/NotoSerifSC.ttf')
+instantiateVariableFont(heading, {'wght': 600}, inplace=True)
+heading_text = text + ''.join(p.read_text(encoding='utf-8') for p in Path('app/src/main/res').rglob('*.xml'))
+# 纳入截图库的真实分类、备注示例，避免视觉验收出现系统字体回落。
+heading_text += ''.join(p.read_text(encoding='utf-8') for p in Path('app/src/visualQa').rglob('*.kt'))
+heading_subset = subset.Subsetter(options=subset.Options())
+heading_subset.populate(text=heading_text)
+heading_subset.subset(heading)
+for entry in heading['name'].names:
+    if entry.nameID in (1, 3, 4, 6, 16):
+        name = 'XiaozhuhengSongHeadings' if entry.nameID == 6 else 'Xiaozhuheng Song Headings'
+        entry.string = name.encode(entry.getEncoding())
+heading.save('app/src/main/res/font/song_headings.ttf')
+print('Heading glyphs:', len(heading.getBestCmap()))

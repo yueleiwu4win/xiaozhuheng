@@ -12,7 +12,7 @@ import kotlin.math.pow
 /** 字体缩小、选中或切换明暗后，关键文字仍应能清楚辨认。 */
 class ThemeContrastTest {
     @Test fun newThemesHaveReadableTextInBothBrightnessModes() {
-        for (style in listOf(ThemeStyle.CELADON, ThemeStyle.INK_GOLD)) {
+        for (style in listOf(ThemeStyle.SONG, ThemeStyle.CELADON, ThemeStyle.INK_GOLD)) {
             val definition = ThemeRegistry.resolve(style)
             verifyTextPairs("${style.value}/light", definition.light)
             verifyTextPairs("${style.value}/dark", definition.dark)

@@ -28,6 +28,8 @@ class LedgerControlsSnapshotTest {
     @get:Rule val paparazzi = Paparazzi(deviceConfig = DeviceConfig(screenWidth = 393, screenHeight = 850,
         xdpi = 160, ydpi = 160, density = Density.MEDIUM, softButtons = false, locale = "zh-rCN"))
 
+    @Test fun songControls() = render(ThemeStyle.SONG, ThemeMode.LIGHT)
+    @Test fun songDarkControls() = render(ThemeStyle.SONG, ThemeMode.DARK)
     @Test fun celadonControls() = render(ThemeStyle.CELADON, ThemeMode.LIGHT)
     @Test fun inkGoldControls() = render(ThemeStyle.INK_GOLD, ThemeMode.DARK)
 

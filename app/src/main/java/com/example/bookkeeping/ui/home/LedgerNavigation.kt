@@ -44,17 +44,18 @@ internal fun LedgerCreateButton(onClick: () -> Unit, wide: Boolean, modifier: Mo
 
 @Composable
 internal fun LedgerNavigationBar(selected: Int, onSelect: (Int) -> Unit) {
+    val song = LocalThemeTokens.current.homeLayout == HomeLayout.SONG
     val jade = LocalThemeTokens.current.homeLayout == HomeLayout.CELADON
     Surface(color = if (jade) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background.copy(alpha = 0.92f)) {
         Column(Modifier.navigationBarsPadding()) {
             if (!jade) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Row(Modifier.fillMaxWidth().selectableGroup().padding(horizontal = 12.dp, vertical = 6.dp)) {
+            Row(Modifier.fillMaxWidth().selectableGroup().padding(horizontal = 12.dp, vertical = if (song) 3.dp else 6.dp)) {
                 val labels = listOf("明细", "统计", "设置")
                 val icons = listOf(Icons.Outlined.ReceiptLong, Icons.Outlined.PieChartOutline, Icons.Outlined.Settings)
                 labels.forEachIndexed { index, label ->
                     val active = selected == index
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        if (!jade && active && LocalDensity.current.fontScale <= 1.3f) {
+                        if (!song && !jade && active && LocalDensity.current.fontScale <= 1.3f) {
                             Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp))
                                 .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f))
                                 .selectable(true, role = Role.Tab, onClick = { onSelect(index) })
@@ -66,7 +67,7 @@ internal fun LedgerNavigationBar(selected: Int, onSelect: (Int) -> Unit) {
                             }
                         } else {
                             Column(Modifier.widthIn(min = 88.dp).clip(RoundedCornerShape(18.dp))
-                                .background(if (!jade && active) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                                .background(if (!song && !jade && active) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                                 .selectable(active, role = Role.Tab, onClick = { onSelect(index) })
                                 .padding(horizontal = 12.dp, vertical = 4.dp).heightIn(min = 52.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -77,6 +78,8 @@ internal fun LedgerNavigationBar(selected: Int, onSelect: (Int) -> Unit) {
                                 }
                                 Spacer(Modifier.height(2.dp))
                                 Text(label, style = ledgerText(12.sp), color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                if (song) Box(Modifier.padding(top = 3.dp).width(24.dp).height(2.dp)
+                                    .background(if (active) MaterialTheme.colorScheme.primary else Color.Transparent))
                             }
                         }
                     }

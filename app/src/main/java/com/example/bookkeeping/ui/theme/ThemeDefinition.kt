@@ -20,7 +20,7 @@ import com.example.bookkeeping.data.prefs.ThemeStyle
 enum class OverviewStyle { CARD, LEDGER, JADE }
 enum class SelectionStyle { CLASSIC, OUTLINED, PILL, BOOKMARK }
 enum class HomeActionPlacement { FLOATING, DOCKED }
-enum class HomeLayout { STANDARD, CELADON, INK_GOLD }
+enum class HomeLayout { STANDARD, CELADON, INK_GOLD, SONG }
 
 @Immutable
 data class ThemeTokens(
@@ -85,23 +85,34 @@ object ThemeRegistry {
     )
     private val song = ThemeDefinition(
         light = ClassicLightColors.copy(
-            primary = Color(0xFF214F43), secondary = Color(0xFF826B47),
-            secondaryContainer = Color(0xFFE5EBE3), onSecondaryContainer = Color(0xFF214F43),
-            outlineVariant = Color(0xFFDDDCD1)
+            primary = Color(0xFF70543D), onPrimary = Color(0xFFFFFAF1),
+            primaryContainer = Color(0xFFE9DDC8), onPrimaryContainer = Color(0xFF44372A),
+            secondary = Color(0xFF826547), secondaryContainer = Color(0xFFECE2D1),
+            onSecondaryContainer = Color(0xFF44372A), background = Color(0xFFF6EFE2),
+            surface = Color(0xFFF9F2E6), surfaceVariant = Color(0xFFECE2D1),
+            surfaceContainer = Color(0xFFF6EEDF), surfaceContainerLow = Color(0xFFF6EFE2),
+            surfaceContainerLowest = Color(0xFFFCF7EE), surfaceContainerHigh = Color(0xFFECE2D1),
+            surfaceContainerHighest = Color(0xFFE6D9C4), onBackground = Color(0xFF302D28),
+            onSurface = Color(0xFF302D28), onSurfaceVariant = Color(0xFF665D50),
+            outline = Color(0xFF9B8972), outlineVariant = Color(0xFFD2C3AD),
+            tertiary = Color(0xFF8D4937), tertiaryContainer = Color(0xFFF1DDD3),
+            onTertiaryContainer = Color(0xFF5F3024)
         ),
         dark = ClassicDarkColors.copy(
-            primary = Color(0xFFD6BE8E), onPrimary = Color(0xFF142B25),
-            primaryContainer = Color(0xFF294C40), onPrimaryContainer = Color(0xFFF4F0E6),
-            secondary = Color(0xFFBFD1C3), secondaryContainer = Color(0xFF294C40),
-            onSecondaryContainer = Color(0xFFF4F0E6), background = Color(0xFF142B25),
-            surface = Color(0xFF1B342C), surfaceVariant = Color(0xFF294239),
-            surfaceContainer = Color(0xFF1B342C), surfaceContainerLow = Color(0xFF142B25),
-            surfaceContainerLowest = Color(0xFF10231D), surfaceContainerHigh = Color(0xFF294239),
-            surfaceContainerHighest = Color(0xFF294239), onBackground = Color(0xFFF4F0E6),
-            onSurface = Color(0xFFF4F0E6), onSurfaceVariant = Color(0xFFBCC9BF),
-            outline = Color(0xFF899E90), outlineVariant = Color(0xFF3D564B)
+            primary = Color(0xFFD6BA91), onPrimary = Color(0xFF30271D),
+            primaryContainer = Color(0xFF493D2F), onPrimaryContainer = Color(0xFFF4EAD9),
+            secondary = Color(0xFFD0BCA1), secondaryContainer = Color(0xFF493D2F),
+            onSecondaryContainer = Color(0xFFF4EAD9), background = Color(0xFF24221D),
+            surface = Color(0xFF2D2A23), surfaceVariant = Color(0xFF413B31),
+            surfaceContainer = Color(0xFF2D2A23), surfaceContainerLow = Color(0xFF24221D),
+            surfaceContainerLowest = Color(0xFF1F1D19), surfaceContainerHigh = Color(0xFF413B31),
+            surfaceContainerHighest = Color(0xFF493F32), onBackground = Color(0xFFF1E8D8),
+            onSurface = Color(0xFFF1E8D8), onSurfaceVariant = Color(0xFFD0C2AE),
+            outline = Color(0xFFAA9780), outlineVariant = Color(0xFF665B49),
+            tertiary = Color(0xFFE4AA92), tertiaryContainer = Color(0xFF59382E),
+            onTertiaryContainer = Color(0xFFFFE2D6)
         ),
-        typography = SongTypography,
+        typography = LedgerTypography,
         shapes = Shapes(
             extraSmall = RoundedCornerShape(4.dp), small = RoundedCornerShape(6.dp),
             medium = RoundedCornerShape(8.dp), large = RoundedCornerShape(12.dp),
@@ -109,12 +120,13 @@ object ThemeRegistry {
         ),
         tokens = ThemeTokens(
             sectionCorner = 0.dp, overviewCorner = 0.dp, rowCorner = 0.dp,
-            categoryCorner = 10.dp, keyCorner = 6.dp, actionCorner = 8.dp,
+            categoryCorner = 5.dp, keyCorner = 5.dp, actionCorner = 5.dp,
             chipCorner = 6.dp, metricCorner = 8.dp, groupedSections = false,
             ledgerRows = true, outlinedIcons = true, mutedCategoryIcons = true,
-            ornament = R.drawable.guofeng_bamboo,
+            monochromeCategoryIcons = true, neutralHeadline = true,
+            homeLayout = HomeLayout.SONG, homeActionPlacement = HomeActionPlacement.DOCKED,
             overviewStyle = OverviewStyle.LEDGER,
-            filterStyle = SelectionStyle.OUTLINED,
+            filterStyle = SelectionStyle.BOOKMARK,
             navigationStyle = SelectionStyle.BOOKMARK
         )
     )
