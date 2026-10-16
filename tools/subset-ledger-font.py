@@ -1,11 +1,34 @@
 """从已下载的 OFL Noto Serif SC 生成离线 UI 正文字体（先安装 fontTools）。"""
 import sys
+import argparse
 from pathlib import Path
 
 sys.path.insert(0, str(Path('.tools/fonttools').resolve()))
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 from fontTools import subset
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--medium-only', action='store_true', help='仅生成阅读设置使用的完整500字重')
+args = parser.parse_args()
+if args.medium_only:
+    medium = TTFont('.tools/fonts/NotoSerifSC.ttf')
+    instantiateVariableFont(medium, {'wght': 500}, inplace=True)
+    # 与正文保持相同覆盖，动态备注和分类不能回落到其他字体。
+    body = TTFont('app/src/main/res/font/ledger_text.ttf')
+    medium_subset = subset.Subsetter(options=subset.Options())
+    medium_subset.populate(unicodes=list(body.getBestCmap()))
+    medium_subset.subset(medium)
+    for entry in medium['name'].names:
+        if entry.nameID in (1, 3, 4, 6, 16):
+            name = 'XiaozhuhengLedgerMedium' if entry.nameID == 6 else 'Xiaozhuheng Ledger Medium'
+            entry.string = name.encode(entry.getEncoding())
+    output = Path('app/src/main/res/font/ledger_medium.ttf')
+    medium.save(output)
+    assert medium['OS/2'].usWeightClass == 500
+    assert set(body.getBestCmap()) <= set(medium.getBestCmap())
+    print('Medium font bytes:', output.stat().st_size)
+    sys.exit(0)
 
 font = TTFont('.tools/fonts/NotoSerifSC.ttf')
 instantiateVariableFont(font, {'wght': 400}, inplace=True)

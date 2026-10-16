@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -65,6 +66,25 @@ private const val PAD_BOTTOM_DP = 26f
 /** 文本测量缓存：一次绘制需要 5 个 Y 刻度 + 最多 31 个 X 标签，默认缓存只有 8。 */
 private const val TEXT_CACHE_SIZE = 40
 
+private data class AxisTextMetrics(
+    val y: List<TextLayoutResult>, val x: List<TextLayoutResult>,
+    val left: Float, val right: Float, val top: Float, val bottom: Float
+)
+
+@Composable
+private fun axisTextMetrics(maxCents: Long, labels: List<String>, style: TextStyle, measurer: TextMeasurer, line: Boolean): AxisTextMetrics {
+    val density = LocalDensity.current
+    val y = (0..4).map { measurer.measure(AmountFormatter.axisLabel((maxCents * (it / 4f)).toLong()), style) }
+    val x = labels.map { measurer.measure(it, style, maxLines = 1, softWrap = false) }
+    return with(density) {
+        AxisTextMetrics(y, x,
+            maxOf(PAD_LEFT_DP.dp.toPx(), (y.maxOfOrNull { it.size.width } ?: 0) + 6.dp.toPx()),
+            maxOf(PAD_RIGHT_DP.dp.toPx(), if (line) (x.lastOrNull()?.size?.width ?: 0) / 2f + 2.dp.toPx() else 0f),
+            maxOf(PAD_TOP_DP.dp.toPx(), (y.maxOfOrNull { it.size.height } ?: 0) / 2f + 4.dp.toPx()),
+            maxOf(PAD_BOTTOM_DP.dp.toPx(), (x.maxOfOrNull { it.size.height } ?: 0) + 12.dp.toPx()))
+    }
+}
+
 /** 把最大值向上取整到「好看的刻度」。入参单位：元。 */
 private fun niceCeilYuan(v: Double): Double {
     if (v <= 0) return 10.0
@@ -100,10 +120,11 @@ fun LineChart(
     var niceMaxCents = remember(maxCents) { (niceCeilYuan(maxCents / 100.0) * 100).toLong() }
     if (niceMaxCents <= 0L) niceMaxCents = 100L
 
-    val padL = with(density) { PAD_LEFT_DP.dp.toPx() }
-    val padR = with(density) { PAD_RIGHT_DP.dp.toPx() }
-    val padT = with(density) { PAD_TOP_DP.dp.toPx() }
-    val padB = with(density) { PAD_BOTTOM_DP.dp.toPx() }
+    val metrics = axisTextMetrics(niceMaxCents, labels, axisText, textMeasurer, line = true)
+    val padL = metrics.left
+    val padR = metrics.right
+    val padT = metrics.top
+    val padB = metrics.bottom
 
     // 无障碍：读屏可播报一行摘要（明细数据在下方列表里可读）
     val chartDesc = remember(labels, maxCents) {
@@ -115,7 +136,7 @@ fun LineChart(
             .semantics { contentDescription = chartDesc }
             .then(
                 if (onPointTap != null) {
-                    Modifier.pointerInput(series, labels) {
+                    Modifier.pointerInput(series, labels, padL, padR, padT, padB) {
                     val plotW = size.width - padL - padR
                     val plotH = size.height - padT - padB
                     detectTapGestures { pos ->
@@ -154,16 +175,13 @@ fun LineChart(
             val frac = d.toFloat() / divs
             val y = padT + plotH * (1f - frac)
             drawLine(gridColor, Offset(padL, y), Offset(padL + plotW, y), strokeWidth = 1f)
-            val layout = textMeasurer.measure(AmountFormatter.axisLabel((niceMaxCents * frac).toLong()), axisText)
-            drawText(layout, topLeft = Offset(padL - layout.size.width - 6.dp.toPx(), y - layout.size.height / 2f))
+            val layout = metrics.y[d]
+            if (d == 0 || d == divs || plotH / divs >= layout.size.height + 4.dp.toPx() || d % 2 == 0)
+                drawText(layout, topLeft = Offset(padL - layout.size.width - 6.dp.toPx(), y - layout.size.height / 2f))
         }
 
-        // X 轴标签（点多时隔一个显示；末位标签始终保留，避免"12月"被丢掉）
-        val every = if (n <= 8) 1 else 2
-        for (i in labels.indices) {
-            if (i % every != 0 && i != n - 1) continue
-            val layout = textMeasurer.measure(labels[i], axisText)
-            drawText(layout, topLeft = Offset(xOf(i) - layout.size.width / 2f, size.height - padB + 8.dp.toPx()))
+        for (label in placeAxisLabels(labels.indices.map { xOf(it) }, metrics.x.map { it.size.width.toFloat() }, size.width, 6.dp.toPx())) {
+            drawText(metrics.x[label.index], topLeft = Offset(label.left, size.height - padB + 8.dp.toPx()))
         }
 
         // 序列
@@ -210,15 +228,16 @@ fun BarChart(
     var niceMaxCents = remember(maxCents) { (niceCeilYuan(maxCents / 100.0) * 100).toLong() }
     if (niceMaxCents <= 0L) niceMaxCents = 100L
 
-    val padL = with(density) { PAD_LEFT_DP.dp.toPx() }
-    val padR = with(density) { PAD_RIGHT_DP.dp.toPx() }
-    val padT = with(density) { PAD_TOP_DP.dp.toPx() }
-    val padB = with(density) { PAD_BOTTOM_DP.dp.toPx() }
+    val metrics = axisTextMetrics(niceMaxCents, points.map { it.label }, axisText, textMeasurer, line = false)
+    val padL = metrics.left
+    val padR = metrics.right
+    val padT = metrics.top
+    val padB = metrics.bottom
 
     Canvas(
         modifier = modifier.then(
             if (onBarTap != null) {
-                Modifier.pointerInput(points) {
+                Modifier.pointerInput(points, padL, padR) {
                     val plotW = size.width - padL - padR
                     detectTapGestures { pos ->
                         val n = points.size
@@ -244,11 +263,11 @@ fun BarChart(
             val frac = d.toFloat() / divs
             val y = padT + plotH * (1f - frac)
             drawLine(gridColor, Offset(padL, y), Offset(padL + plotW, y), strokeWidth = 1f)
-            val layout = textMeasurer.measure(AmountFormatter.axisLabel((niceMaxCents * frac).toLong()), axisText)
-            drawText(layout, topLeft = Offset(padL - layout.size.width - 6.dp.toPx(), y - layout.size.height / 2f))
+            val layout = metrics.y[d]
+            if (d == 0 || d == divs || plotH / divs >= layout.size.height + 4.dp.toPx() || d % 2 == 0)
+                drawText(layout, topLeft = Offset(padL - layout.size.width - 6.dp.toPx(), y - layout.size.height / 2f))
         }
 
-        val every = if (n > 8) 2 else 1
         for (i in points.indices) {
             val cx = padL + slot * i + slot / 2f
             val v = points[i].value
@@ -266,12 +285,11 @@ fun BarChart(
                 // 顶到轴顶时改画在柱内顶部，避免被画布裁掉
                 val above = top - layout.size.height - 4.dp.toPx()
                 val labelTop = if (above < padT) top + 4.dp.toPx() else above
-                drawText(layout, topLeft = Offset(cx - layout.size.width / 2f, labelTop))
+                drawText(layout, topLeft = Offset((cx - layout.size.width / 2f).coerceIn(0f, (size.width - layout.size.width).coerceAtLeast(0f)), labelTop))
             }
-            if (i % every == 0 || i == n - 1) {
-                val layout = textMeasurer.measure(points[i].label, axisText)
-                drawText(layout, topLeft = Offset(cx - layout.size.width / 2f, size.height - padB + 8.dp.toPx()))
-            }
+        }
+        for (label in placeAxisLabels(points.indices.map { padL + slot * (it + 0.5f) }, metrics.x.map { it.size.width.toFloat() }, size.width, 6.dp.toPx())) {
+            drawText(metrics.x[label.index], topLeft = Offset(label.left, size.height - padB + 8.dp.toPx()))
         }
     }
 }

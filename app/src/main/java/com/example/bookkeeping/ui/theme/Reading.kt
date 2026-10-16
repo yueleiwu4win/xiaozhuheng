@@ -18,8 +18,11 @@ import com.example.bookkeeping.data.prefs.*
 val LocalReadingOptions = staticCompositionLocalOf { ReadingOptions() }
 internal val LocalReadingBaseDensity = staticCompositionLocalOf<Density?> { null }
 
-// 自定义字重使用完整正文汉字区及合成字重，避免挑到短标题子集后动态分类缺字。
-private val CompleteSerif = FontFamily(Font(R.font.ledger_text, FontWeight.Normal))
+// 正文400/500均提供完整字库；平台合成只用于更粗字重。
+private val CompleteSerif = FontFamily(
+    Font(R.font.ledger_text, FontWeight.Normal),
+    Font(R.font.ledger_medium, FontWeight.Medium)
+)
 
 internal fun applyReadingStyle(base: TextStyle, options: ReadingOptions): TextStyle {
     val original = base.fontWeight ?: FontWeight.Normal
