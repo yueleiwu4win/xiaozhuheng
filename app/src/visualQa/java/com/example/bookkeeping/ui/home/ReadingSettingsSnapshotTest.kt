@@ -29,13 +29,24 @@ class ReadingSettingsSnapshotTest {
 
     @Test fun panelTopWithLivePreview() = panel(0)
     @Test fun panelFontBackgroundAndEnhancement() = panel(5)
+    @Test fun inkGoldPage() = panel(0, ThemeStyle.INK_GOLD, ThemeMode.DARK, draft = ReadingOptions())
+    @Test fun inkGoldLowerOptions() = panel(3, ThemeStyle.INK_GOLD, ThemeMode.DARK)
+    @Test fun celadonPage() = panel(0, ThemeStyle.CELADON)
+    @Test fun classicPage() = panel(0, ThemeStyle.CLASSIC)
+    @Test fun largerOptionsUseTwoColumns() = panel(2, ThemeStyle.INK_GOLD, ThemeMode.DARK, ReadingOptions(size = ReadingSize.LARGEST))
+    @Test fun combinedLargeOptionsRemainReachable() {
+        paparazzi.unsafeUpdateConfig(deviceConfig = DeviceConfig(screenWidth = 320, screenHeight = 850,
+            xdpi = 160, ydpi = 160, density = Density.MEDIUM, softButtons = false, locale = "zh-rCN", fontScale = 2f))
+        panel(2, ThemeStyle.INK_GOLD, ThemeMode.DARK, ReadingOptions(size = ReadingSize.LARGEST))
+    }
 
-    private fun panel(index: Int) = paparazzi.snapshot {
-        val settings = AppSettings(themeMode = ThemeMode.LIGHT, themeStyle = ThemeStyle.SONG, background = BACKGROUND_SPEC_ABACUS)
+    private fun panel(index: Int, theme: ThemeStyle = ThemeStyle.SONG, mode: ThemeMode = ThemeMode.LIGHT,
+        reading: ReadingOptions = ReadingOptions(), draft: ReadingOptions = ReadingOptions.Clear) = paparazzi.snapshot {
+        val settings = AppSettings(themeMode = mode, themeStyle = theme, background = BACKGROUND_SPEC_ABACUS, reading = reading)
         CompositionLocalProvider(LocalBackgroundSpec provides settings.background) {
-            BookkeepingTheme(settings.themeMode, settings.themeStyle) {
+            BookkeepingTheme(settings.themeMode, settings.themeStyle, settings.reading) {
                 Surface(color = MaterialTheme.colorScheme.surface) {
-                    ReadingSettingsContent(settings, ReadingOptions.Clear, {}, {}, rememberLazyListState(index))
+                    ReadingSettingsContent(settings, draft, {}, {}, rememberLazyListState(index))
                 }
             }
         }

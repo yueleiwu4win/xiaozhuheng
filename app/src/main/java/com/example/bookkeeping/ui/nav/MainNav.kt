@@ -45,6 +45,7 @@ import com.example.bookkeeping.ui.edit.EditScreen
 import com.example.bookkeeping.ui.home.HomeScreen
 import com.example.bookkeeping.ui.home.HomeViewModel
 import com.example.bookkeeping.ui.settings.SettingsScreen
+import com.example.bookkeeping.ui.settings.ReadingSettingsScreen
 import com.example.bookkeeping.ui.stats.StatsScreen
 import com.example.bookkeeping.ui.stats.CategoryBillsScreen
 
@@ -107,8 +108,12 @@ fun MainNav() {
                 }
                 composable(ROUTE_ME) {
                     MainPageScaffold(ROUTE_ME, navController, snackbar) {
-                        SettingsScreen(onOpenCategories = { navController.navigate("category?type=expense") })
+                        SettingsScreen(onOpenCategories = { navController.navigate("category?type=expense") },
+                            onOpenReading = { navController.navigate("reading") { launchSingleTop = true } })
                     }
+                }
+                composable("reading") {
+                    ReadingSettingsScreen(onBack = { navController.popBackStack() })
                 }
                 composable(ROUTE_CATEGORY, arguments = listOf(navArgument("type") { defaultValue = "expense" })) { entry ->
                     CategoryScreen(onBack = { navController.popBackStack() }, initialType = entry.arguments?.getString("type") ?: "expense")

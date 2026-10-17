@@ -137,11 +137,14 @@ class SettingsViewModel(
         }
     }
 
-    fun setReading(options: ReadingOptions) {
+    fun setReading(options: ReadingOptions, onSaved: () -> Unit) {
+        if (_busy.value) return
+        _busy.value = true
         viewModelScope.launch {
-            try { settingsRepository.setReading(options) }
+            try { settingsRepository.setReading(options); onSaved() }
             catch (e: CancellationException) { throw e }
             catch (_: Exception) { _result.value = ExportResult(false, "阅读设置保存失败，请重试") }
+            finally { _busy.value = false }
         }
     }
 
