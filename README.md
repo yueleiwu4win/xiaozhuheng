@@ -9,6 +9,10 @@
 
 当前基础版本为 **1.0**（versionCode 3），以 Git 标签 `v1.0` 固定保存。后续体验优化可以从此版本继续开发；版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
+当前 feature 分支提供 **1.1.7 主题体验版**：设置 → 外观 → 界面风格，可切换经典、绢本山水、青玉雅集与墨金藏书。宋式已重设计为独立山水账页，采用浅绢纸面、棕墨操作、朱红算盘印章与笔搁。选择「背景 → 主题默认」可看到山水效果；原人物背景仍可选择。青玉与墨金使用独立首页布局，分别采用玉色概览与通栏账页；青玉推荐浅色，墨金推荐深色。墨金首页按新的双栏原稿重排，横向分类、紧凑账目和底部通栏记账按钮；相册照片背景继续保留，升级不重置背景选择。原稿纹理可在「背景 → 主题默认」查看。开发与截图验证说明见 [主题系统与扩展说明](docs/主题系统与扩展说明.md)。
+
+新增「设置 → 外观 → 文字与阅读」，支持字号、字重、系统字体/宋体、背景强度、阅读增强、实时预览和一键清晰；阅读偏好跨主题记忆并进入备份。使用与实现见 [文字与阅读](docs/文字与阅读.md)。
+
 ## 功能（V1.0）
 
 - **启动**：使用用户提供的汉服女子算盘图片作为桌面、安装和启动图标；只显示一个图标启动窗口，必要数据就绪后直接进入首页，取消后续全屏封面；分类持续缓存，新记账同步显示分类与默认选中项。
@@ -84,19 +88,22 @@ gradlew.bat :app:assembleDebug
 
 产物：`app\build\outputs\apk\debug\app-debug.apk`
 
-打包当前 1.0 体验版：
+打包当前体验版：
 
 ```bat
 gradlew.bat :app:packageXiaozhuheng
 ```
 
-产物：`app\build\outputs\distribution\xiaozhuheng-v1.0.apk`。`preview` 使用非调试运行模式，沿用本机 debug 签名；其他电脑生成的 debug 签名不同，不能直接覆盖原安装包。签名文件不提交到仓库。
+产物：`app\build\outputs\distribution\xiaozhuheng-v1.1.3.apk`。`preview` 使用非调试运行模式，沿用本机 debug 签名；其他电脑生成的 debug 签名不同，不能直接覆盖原安装包。签名文件不提交到仓库。
 
 验证代码：
 
 ```bat
 gradlew.bat :app:testDebugUnitTest :app:lintDebug
 ```
+
+可选原生截图验收：`gradlew.bat :app:recordPaparazziDebug -PvisualQa --tests "*Ledger*SnapshotTest*"`。
+只在带 `-PvisualQa` 时加载 Paparazzi；不增加 APK 的运行依赖。已接受的截图位于 `app/src/test/snapshots/images`，图文对照见 [design-qa.md](design-qa.md)。
 
 > `local.properties`（SDK 路径）已加入 `.gitignore`，由 Studio 自动创建或手工写入：
 > `sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk`
@@ -145,3 +152,5 @@ app/src/main/java/com/example/bookkeeping/
 | 文案国际化（`strings.xml` 目前只有 `app_name`） | 全项目硬编码中文；抽出资源工作量较大 |
 | 超大备份流式导出（`JsonWriter`） | 10 万条以上才需要，暂不优化 |
 | 周起始日设置暂未生效 | 无周维度统计，属预留项 |
+
+内置背景：设置 → 外观 → 背景 →「静心拨珠」，可直接选择汉服女子算盘插画，无需相册文件，浅深色模式自动调整蒙层。

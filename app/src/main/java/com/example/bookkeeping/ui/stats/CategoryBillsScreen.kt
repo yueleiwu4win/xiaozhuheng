@@ -1,5 +1,6 @@
 package com.example.bookkeeping.ui.stats
 
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -61,9 +62,9 @@ fun CategoryBillsScreen(onBack: () -> Unit, onEdit: (Long) -> Unit,
                 item(key = "day:$date") { GroupHeader(DateUtils.groupLabel(date), "$label ${AmountFormatter.withSymbol(records.sumOf { it.bill.amountCents }, currency)}") }
                 records.forEach { record ->
                     item(key = record.bill.id) {
-                        Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)) {
+                        Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(LocalThemeTokens.current.rowCorner)) {
                             Row(Modifier.fillMaxWidth().clickable { onEdit(record.bill.id) }.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                CategoryIconBox(CategoryIcons.byKey(record.category.icon), record.category.color.hexToColor())
+                                CategoryIconBox(categoryIcon(record.category.icon), record.category.color.hexToColor())
                                 Column(Modifier.weight(1f)) {
                                     Text(record.category.name, style = MaterialTheme.typography.bodyMedium)
                                     record.bill.note?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }

@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import java.io.IOException
@@ -25,6 +26,9 @@ const val BACKGROUND_SPEC_DEFAULT = "default"
 /** 背景设置取值：相册自定义图片。 */
 const val BACKGROUND_SPEC_CUSTOM_IMAGE = "image:custom"
 
+/** 内置汉服算盘插画，不依赖相册文件。 */
+const val BACKGROUND_SPEC_ABACUS = "image:abacus"
+
 /** 主题模式：system | light | dark */
 enum class ThemeMode(val value: String) {
     SYSTEM("system"),
@@ -42,13 +46,16 @@ data class AppSettings(
     /** 周起始日是否为周一（预留给周维度统计） */
     val weekStartMonday: Boolean = true,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val themeStyle: ThemeStyle = ThemeStyle.CLASSIC,
     /**
      * 背景设置：
      * - "default" 跟随主题底色
      * - "gradient:FFxxxxxx:FFxxxxxx" 预设渐变
      * - "image:custom" 相册图片（文件路径固定，见 BackgroundImageStore）
+     * - "image:abacus" 内置静心拨珠插画
      */
-    val background: String = BACKGROUND_SPEC_DEFAULT
+    val background: String = BACKGROUND_SPEC_DEFAULT,
+    val reading: ReadingOptions = ReadingOptions()
 )
 
 /** 上次记账使用的分类与日期（连续快速记账用，跨重启保留）。 */
@@ -77,7 +84,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
                         currency = p[KEY_CURRENCY] ?: "CNY",
                         weekStartMonday = p[KEY_WEEK] ?: true,
                         themeMode = ThemeMode.from(p[KEY_THEME]),
-                        background = p[KEY_BG] ?: BACKGROUND_SPEC_DEFAULT
+                        themeStyle = ThemeStyle.from(p[KEY_STYLE]),
+                        background = p[KEY_BG] ?: BACKGROUND_SPEC_DEFAULT,
+                        reading = ReadingOptions(ReadingSize.from(p[KEY_READING_SIZE]), ReadingWeight.from(p[KEY_READING_WEIGHT]),
+                            ReadingFont.from(p[KEY_READING_FONT]), p[KEY_BG_STRENGTH] ?: 100, p[KEY_READING_ENHANCED] ?: false).normalized()
                     )
                     _lastUsed.value = LastUsed(p[KEY_LAST_CATEGORY], p[KEY_LAST_DATE])
                     loaded.complete(Unit)
@@ -110,8 +120,27 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         context.dataStore.edit { it[KEY_THEME] = mode.value }
     }
 
+    suspend fun setThemeStyle(style: ThemeStyle, applyRecommendation: Boolean = true) {
+        // 一次提交风格及推荐明暗，避免切换时先闪过另一套配色。
+        context.dataStore.edit {
+            it[KEY_STYLE] = style.value
+            if (applyRecommendation) style.recommendedMode?.let { mode -> it[KEY_THEME] = mode.value }
+        }
+    }
+
     suspend fun setBackground(spec: String) {
         context.dataStore.edit { it[KEY_BG] = spec }
+    }
+
+    suspend fun setReading(options: ReadingOptions) {
+        val value = options.normalized()
+        context.dataStore.edit {
+            it[KEY_READING_SIZE] = value.size.value
+            it[KEY_READING_WEIGHT] = value.weight.value
+            it[KEY_READING_FONT] = value.font.value
+            it[KEY_BG_STRENGTH] = value.backgroundStrength
+            it[KEY_READING_ENHANCED] = value.enhanced
+        }
     }
 
     suspend fun setLastUsed(categoryId: Long, date: String) {
@@ -126,8 +155,14 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val KEY_CURRENCY = stringPreferencesKey("currency")
         val KEY_WEEK = booleanPreferencesKey("week_start_monday")
         val KEY_THEME = stringPreferencesKey("theme_mode")
+        val KEY_STYLE = stringPreferencesKey("theme_style")
         val KEY_BG = stringPreferencesKey("background_spec")
         val KEY_LAST_CATEGORY = longPreferencesKey("last_category_id")
         val KEY_LAST_DATE = stringPreferencesKey("last_date")
+        val KEY_READING_SIZE = stringPreferencesKey("reading_size")
+        val KEY_READING_WEIGHT = stringPreferencesKey("reading_weight")
+        val KEY_READING_FONT = stringPreferencesKey("reading_font")
+        val KEY_BG_STRENGTH = intPreferencesKey("background_strength")
+        val KEY_READING_ENHANCED = booleanPreferencesKey("reading_enhanced")
     }
 }

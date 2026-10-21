@@ -2,6 +2,7 @@ package com.example.bookkeeping.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -9,7 +10,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import com.example.bookkeeping.data.prefs.ReadingOptions
 import com.example.bookkeeping.data.prefs.ThemeMode
+import com.example.bookkeeping.data.prefs.ThemeStyle
 
 /** 语义色：跨页面统一取用，明暗各一套（避免各页面各写一份魔法色）。 */
 @Immutable
@@ -35,7 +40,7 @@ private val DarkAppColors = AppColors(
 val LocalAppColors = staticCompositionLocalOf { LightAppColors }
 val LocalAppDark = staticCompositionLocalOf { false }
 
-private val LightColors = lightColorScheme(
+internal val ClassicLightColors = lightColorScheme(
     primary = Primary,
     onPrimary = OnPrimary,
     onPrimaryContainer = PrimaryDark,
@@ -59,7 +64,7 @@ private val LightColors = lightColorScheme(
     error = Danger
 )
 
-private val DarkColors = darkColorScheme(
+internal val ClassicDarkColors = darkColorScheme(
     primary = Color(0xFF6FC2B2),
     onPrimary = Color(0xFF08302A),
     primaryContainer = PrimaryDark,
@@ -95,16 +100,29 @@ fun ThemeMode.isDark(): Boolean = when (this) {
 @Composable
 fun BookkeepingTheme(
     themeMode: ThemeMode,
+    themeStyle: ThemeStyle = ThemeStyle.CLASSIC,
+    reading: ReadingOptions = ReadingOptions(),
     content: @Composable () -> Unit
 ) {
+    val baseDensity = LocalReadingBaseDensity.current ?: LocalDensity.current
+    val scaledDensity = Density(baseDensity.density, baseDensity.fontScale * reading.size.scale)
     val dark = themeMode.isDark()
+    val definition = ThemeRegistry.resolve(themeStyle)
+    val palette = if (dark) definition.dark else definition.light
     CompositionLocalProvider(
+        LocalReadingBaseDensity provides baseDensity,
+        LocalDensity provides scaledDensity,
+        LocalReadingOptions provides reading.normalized(),
         LocalAppColors provides if (dark) DarkAppColors else LightAppColors,
-        LocalAppDark provides dark
+        LocalAppDark provides dark,
+        LocalThemeTokens provides definition.tokens,
+        // 透明 Scaffold 的 contentColor 继承此值，深色页面不再落到默认黑色。
+        LocalContentColor provides palette.onSurface
     ) {
         MaterialTheme(
-            colorScheme = if (dark) DarkColors else LightColors,
-            typography = Typography,
+            colorScheme = palette,
+            typography = definition.typography.withReading(reading),
+            shapes = definition.shapes,
             content = content
         )
     }

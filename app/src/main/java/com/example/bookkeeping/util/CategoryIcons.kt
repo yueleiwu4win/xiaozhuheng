@@ -1,5 +1,6 @@
 package com.example.bookkeeping.util
 
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BeachAccess
 import androidx.compose.material.icons.filled.Build
@@ -94,7 +95,51 @@ object CategoryIcons {
     private val INDEX: Map<String, ImageVector> =
         ALL.associate { it.key to it.icon }
 
-    fun byKey(key: String): ImageVector = INDEX[key] ?: Icons.Filled.MoreHoriz
+    private val OUTLINE_INDEX = mapOf(
+        "restaurant" to Icons.Outlined.Restaurant,
+        "local_cafe" to Icons.Outlined.LocalCafe,
+        "fastfood" to Icons.Outlined.Fastfood,
+        "local_grocery_store" to Icons.Outlined.LocalGroceryStore,
+        "local_bar" to Icons.Outlined.LocalBar,
+        "directions_bus" to Icons.Outlined.DirectionsBus,
+        "directions_car" to Icons.Outlined.DirectionsCar,
+        "local_taxi" to Icons.Outlined.LocalTaxi,
+        "train" to Icons.Outlined.Train,
+        "flight" to Icons.Outlined.Flight,
+        "luggage" to Icons.Outlined.Luggage,
+        "hotel" to Icons.Outlined.Hotel,
+        "beach_access" to Icons.Outlined.BeachAccess,
+        "local_gas_station" to Icons.Outlined.LocalGasStation,
+        "shopping_bag" to Icons.Outlined.ShoppingBag,
+        "checkroom" to Icons.Outlined.Checkroom,
+        "sports_esports" to Icons.Outlined.SportsEsports,
+        "movie" to Icons.Outlined.Movie,
+        "music_note" to Icons.Outlined.MusicNote,
+        "sports_soccer" to Icons.Outlined.SportsSoccer,
+        "pets" to Icons.Outlined.Pets,
+        "toys" to Icons.Outlined.Toys,
+        "local_hospital" to Icons.Outlined.LocalHospital,
+        "medication" to Icons.Outlined.Medication,
+        "school" to Icons.Outlined.School,
+        "menu_book" to Icons.Outlined.MenuBook,
+        "phone_iphone" to Icons.Outlined.PhoneIphone,
+        "wifi" to Icons.Outlined.Wifi,
+        "electric_bolt" to Icons.Outlined.ElectricBolt,
+        "home" to Icons.Outlined.Home,
+        "kitchen" to Icons.Outlined.Kitchen,
+        "build" to Icons.Outlined.Build,
+        "card_giftcard" to Icons.Outlined.CardGiftcard,
+        "emoji_events" to Icons.Outlined.EmojiEvents,
+        "savings" to Icons.Outlined.Savings,
+        "credit_card" to Icons.Outlined.CreditCard,
+        "receipt_long" to Icons.Outlined.ReceiptLong,
+        "work" to Icons.Outlined.Work,
+        "currency_exchange" to Icons.Outlined.CurrencyExchange,
+        "more_horiz" to Icons.Outlined.MoreHoriz
+    )
+
+    fun byKey(key: String, outlined: Boolean = false): ImageVector =
+        if (outlined) OUTLINE_INDEX[key] ?: Icons.Outlined.MoreHoriz else INDEX[key] ?: Icons.Filled.MoreHoriz
 
     fun labelOf(key: String): String =
         ALL.firstOrNull { it.key == key }?.label ?: key

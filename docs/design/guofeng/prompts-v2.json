@@ -1,0 +1,27 @@
+{
+  "generatedWith": "Built-in image_gen",
+  "date": "2026-10-14",
+  "stage": "Corrected concepts; authoritative latest displayed set",
+  "referenceImages": [
+    "actual user Home screenshot",
+    "original Hanfu woman and abacus brand artwork",
+    "each corresponding first-draft concept"
+  ],
+  "options": [
+    {
+      "visibleOrder": 1,
+      "name": "宋式书账",
+      "prompt": "Refine the attached app mockup. Output a SINGLE portrait MOBILE APP SCREEN, aspect ratio exactly 390:844 (e.g. 936x2024), no phone frame or OS chrome. Keep its excellent 宋式书账 ivory paper and ink-green editorial ledger aesthetic. The other two references are actual app functional reference and original brand art.\nCrucial corrections: use clean sans-serif tabular Arabic digits for ALL financial numbers and a readable sans for row/body text; Song serif only for short headings. Fade bamboo by 60%, especially around search and filter controls. No decoration over text. Expense is ¥2,023.71 / 29笔; income is ¥8,000.00 / 1笔 (NOT 0笔); balance ¥5,976.29. Exact month 2026年10月. Date anchor 2026-10-14 Wednesday.\nTitle 小珠衡. Search + filter top right. Filters ONLY 全部 支出 收入. Today header 今天 · 10月14日 周三, 支出 ¥120.00. Rows 餐饮 / 午餐 / −¥28.00; 交通 / 地铁 / −¥6.00; 购物 / 日用品 / −¥86.00. Yesterday header 昨天 · 10月13日 周二, row 书籍 / 阅读 / −¥49.00. One primary 记一笔 ink-green modest rectangular button, lower right above bottom navigation, NO overlap with any list content. Bottom tabs EXACTLY 明细 / 统计 / 设置. No success toast or snackbar. Use generous mobile spacing, body 14-16 logical px, targets48px, no nested cards. Retain clean continuous rows and subtle fine dividers, calm refined visual. Do not add decorative explanations or option numbers."
+    },
+    {
+      "visibleOrder": 2,
+      "name": "青玉雅集",
+      "prompt": "Refine attached 青玉雅集 bookkeeping app mockup into a SINGLE MOBILE APP SCREEN. Output ratio EXACTLY 390:844 portrait (e.g.936x2024), app content only, no phone frame or OS status bar.\nRetain pale celadon summary panel, paper-white background, restrained bamboo, delicate line icons and one wide ink-green 记一笔 button ABOVE bottom navigation. Original actual screenshot supplies functional reference, woman/abacus artwork supplies brand palette.\nCRITICAL RECOMPOSE for narrow phone: readable body14-16 logicalpx, Song serif only for short headings; clean sans-serif/tabular Arabic numbers for ALL amounts. No cramped columns. Title 小珠衡, tiny portrait static brand medallion. Top-right search and FILTER icon, not settings. Monthselector with previous and next arrows: 2026年10月. Data dateanchor2026-10-14 Wednesday. Summary 本月支出 ¥2,023.71; 收入 ¥8,000.00; 结余 ¥5,976.29.\nFilters EXACTLY THREE: 全部 / 支出 / 收入. REMOVE 转账 and 退款 completely, no extra filters/features.\nDaily header 今天 · 10月14日 周三; 支出 ¥120.00. Rows 餐饮 / 午餐 / −¥28.00; 交通 / 地铁 / −¥6.00; 购物 / 日用品 / −¥86.00. Second header 昨天 · 10月13日 周二 and 书籍 / 阅读 / −¥49.00 if space fits. No times of day.\nBottom tabs EXACTLY 明细 / 统计 / 设置, no 首页 or 我的. One flat continuous list with fine separators, NO card for every row. CTA unobstructed, adequate list padding. Do not add page titles outside app, variant numbers, toast, snackbar, success banner, ads, extra account or rewards. Beautiful quiet refined jade-and-paper character, slight16px corners on single summary surface, almost no shadows or gradients."
+    },
+    {
+      "visibleOrder": 3,
+      "name": "墨金藏书",
+      "prompt": "Refine attached 墨金藏书 app into a SINGLE NARROW MOBILE APP SCREEN. Output EXACT 390:844 portrait ratio (e.g.936x2024). No device frame, statusbar, browser chrome.\nKeep deep ink-green paper/cloth #142B25, warm ivory #F4F0E6, subtle bronze #C4AB78, restrained abacus motif and fine ledger rules. The original actual app screenshot gives functional grounding; original woman/abacus picture gives brand mood, do not paste the portrait on the dark page.\nMUST recompose from the wide layout: header 小珠衡 upperleft, top-right small SEARCH and FILTER icons. Month previous/next selector below: 2026年10月. Large 本月支出 ¥2,023.71 on its own line. Income and balance BELOW it in two supporting columns: 收入 ¥8,000.00 and 结余 ¥5,976.29. No wide desktop three-column dashboard.\nAll financial numbers and body use clean readable sans-serif and tabular Arabic figures. Song serif only headings. High-contrast text, very faint texture behind data. Body14-16 logicalpx, targets48px. Date anchor2026-10-14 Wednesday.\nFilters ONLY 全部 / 支出 / 收入, no long category row. 全部 selected by tiny bronze bookmark stroke.\n今天 · 10月14日 周三, 支出 ¥120.00; three rows 餐饮 / 午餐 / −¥28.00, 交通 / 地铁 / −¥6.00, 购物 / 日用品 / −¥86.00. If room: 昨天 · 10月13日 周二 and 书籍 / 阅读 / −¥49.00. Exact data and date; do not substitute 2024 or alternate numbers.\nOne understated cream-bronze rectangular 记一笔 button lower right above tabs, no overlap with rows. Bottom navigation EXACTLY 明细 / 统计 / 设置 with clear line icons and labels. Use open continuous ledger, no unnecessarycards, no success banners. Elegant night-mode companion, not luxury bank marketing. Show only app content, no conceptual title or variant label."
+    }
+  ]
+}

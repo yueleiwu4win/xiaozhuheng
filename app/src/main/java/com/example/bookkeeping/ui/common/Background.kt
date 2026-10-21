@@ -1,5 +1,7 @@
 package com.example.bookkeeping.ui.common
 
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.LocalReadingOptions
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -19,8 +21,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.example.bookkeeping.ui.theme.HomeLayout
+import com.example.bookkeeping.R
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_CUSTOM_IMAGE
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_DEFAULT
+import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_ABACUS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -64,6 +70,19 @@ fun BackgroundPreset.spec(): String = "gradient:$fromHex:$toHex"
 @Composable
 fun AppBackground(modifier: Modifier = Modifier) {
     val spec = LocalBackgroundSpec.current
+    val bitmap = if (spec == BACKGROUND_SPEC_CUSTOM_IMAGE) {
+        val file = customBackgroundFile(LocalContext.current)
+        val image by produceState<ImageBitmap?>(null, spec, file.lastModified()) {
+            value = withContext(Dispatchers.IO) { decodeSampled(file)?.asImageBitmap() }
+        }
+        image
+    } else null
+    AppBackgroundContent(spec, bitmap, modifier)
+}
+
+/** 解码与绘制分离，照片和主题背景共用真实页面绘制逻辑。 */
+@Composable
+internal fun AppBackgroundContent(spec: String, bitmap: ImageBitmap?, modifier: Modifier = Modifier) {
     val isDark = LocalAppDark.current
 
     Box(modifier = modifier) {
@@ -74,6 +93,19 @@ fun AppBackground(modifier: Modifier = Modifier) {
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
                 )
+                val layout = LocalThemeTokens.current.homeLayout
+                if (layout == HomeLayout.INK_GOLD && isDark) {
+                    Image(painterResource(R.drawable.ink_gold_bookcloth), null,
+                        Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = 0.42f)
+                } else if (layout != HomeLayout.STANDARD) LedgerPaper(Modifier.fillMaxSize(), if (isDark) 0.035f else 0.075f)
+                if (layout == HomeLayout.STANDARD) LocalThemeTokens.current.ornament?.let { resource ->
+                    Image(
+                        painterResource(resource), contentDescription = null,
+                        modifier = Modifier.fillMaxSize(), contentScale = ContentScale.FillWidth,
+                        alignment = androidx.compose.ui.Alignment.TopEnd,
+                        alpha = if (isDark) 0.08f else 0.16f
+                    )
+                }
             }
 
             spec.startsWith("gradient:") -> {
@@ -96,15 +128,12 @@ fun AppBackground(modifier: Modifier = Modifier) {
                 }
             }
 
-            spec == BACKGROUND_SPEC_CUSTOM_IMAGE -> {
-                val context = LocalContext.current
-                val file = customBackgroundFile(context)
-                // 解码放到 IO 线程（produceState），避免在组合阶段阻塞首帧
-                val bitmap by produceState<ImageBitmap?>(initialValue = null, spec, file.lastModified()) {
-                    value = withContext(Dispatchers.IO) { decodeSampled(file)?.asImageBitmap() }
-                }
+            spec == BACKGROUND_SPEC_CUSTOM_IMAGE || spec == BACKGROUND_SPEC_ABACUS -> {
                 val img = bitmap
-                if (img != null) {
+                if (spec == BACKGROUND_SPEC_ABACUS) {
+                    Image(painterResource(R.drawable.background_abacus), null,
+                        Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                } else if (img != null) {
                     Image(
                         bitmap = img,
                         contentDescription = null,
@@ -137,7 +166,11 @@ fun AppBackground(modifier: Modifier = Modifier) {
                 )
             }
         }
+        // 调低强度逐渐回到主题纸色，所有内置/相册/渐变背景统一处理。
+        val reduction = 1f - LocalReadingOptions.current.backgroundStrength.coerceIn(0, 100) / 100f
+        if (reduction > 0f) Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = reduction)))
     }
+
 }
 
 /** 解码背景图片（最大边 1280px，采样解码，避免大图 OOM）。 */

@@ -95,6 +95,10 @@ class HomeViewModel(
         _filter.value = _filter.value.withType(type, categories.value)
     }
 
+    fun setLedgerCategoryFilter(categoryId: Long?) {
+        _filter.value = _filter.value.withLedgerCategory(categories.value.firstOrNull { it.id == categoryId })
+    }
+
     fun setKeyword(keyword: String) {
         _filter.value = _filter.value.copy(keyword = keyword)
     }

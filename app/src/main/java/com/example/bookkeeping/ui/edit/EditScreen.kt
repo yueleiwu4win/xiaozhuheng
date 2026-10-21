@@ -1,5 +1,12 @@
 package com.example.bookkeeping.ui.edit
 
+import com.example.bookkeeping.ui.theme.LocalReadingOptions
+import com.example.bookkeeping.ui.theme.readingTextStyle
+import com.example.bookkeeping.ui.home.FittedLedgerAmount
+import androidx.compose.ui.platform.LocalDensity
+import com.example.bookkeeping.ui.common.*
+import com.example.bookkeeping.ui.theme.LocalThemeTokens
+import com.example.bookkeeping.ui.theme.HomeLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
@@ -9,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Backspace
@@ -180,7 +188,7 @@ fun EditScreen(
                     supportingText = { Text("${noteDraft.length}/50") },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { confirmNote() }),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(LocalThemeTokens.current.categoryCorner)
                 )
             },
             confirmButton = { TextButton(onClick = confirmNote) { Text("完成") } },
@@ -189,12 +197,12 @@ fun EditScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = if (LocalReadingOptions.current.enhanced) MaterialTheme.colorScheme.background.copy(alpha = 0.95f) else if (LocalThemeTokens.current.ledgerRows) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.surface,
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text(if (viewModel.isEdit) "编辑记录" else "记一笔") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = if (LocalThemeTokens.current.ledgerRows) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.surface),
                 navigationIcon = {
                     IconButton(onClick = requestBack, enabled = !saving && !deleting) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -202,7 +210,7 @@ fun EditScreen(
                 },
                 actions = {
                     if (viewModel.isEdit) IconButton(onClick = { if (!leaving) showDelete = true }, enabled = enabled) {
-                        Icon(Icons.Filled.DeleteOutline, contentDescription = "删除这笔记录", tint = MaterialTheme.colorScheme.error)
+                        Icon(themedIcon(Icons.Filled.DeleteOutline, Icons.Outlined.DeleteOutline), contentDescription = "删除这笔记录", tint = MaterialTheme.colorScheme.error)
                     }
                 }
             )
@@ -223,25 +231,19 @@ fun EditScreen(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(BillType.EXPENSE to "支出", BillType.INCOME to "收入").forEach { (type, label) ->
-                        FilterChip(
+                        AppFilterChip(
                             selected = billType == type, onClick = { if (!leaving) viewModel.selectType(type) },
                             enabled = enabled, label = { Text(label, style = MaterialTheme.typography.titleSmall) },
-                            leadingIcon = if (billType == type) ({ Icon(Icons.Filled.Check, null, Modifier.size(18.dp)) }) else null
+                            leadingIcon = if (billType == type) ({ Icon(themedIcon(Icons.Filled.Check, Icons.Outlined.Check), null, Modifier.size(18.dp)) }) else null
                         )
                     }
                 }
                 Text("金额", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(currency, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 4.dp))
-                    Text(
-                        display,
-                        style = MaterialTheme.typography.displayMedium.copy(
-                            fontSize = if (display.length > 10) 36.sp else 44.sp,
-                            fontFeatureSettings = AmountFontFeatures
-                        ),
+                    FittedLedgerAmount(display, if (display.length > 10) 36.sp else 44.sp, Modifier.weight(1f),
                         color = if (billType == BillType.INCOME) incomeColor else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f), maxLines = 1
-                    )
+                        textStyle = themeAmountStyle(MaterialTheme.typography.displayMedium))
                 }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("选择分类", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
@@ -249,7 +251,7 @@ fun EditScreen(
                 }
             }
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(64.dp), modifier = Modifier.weight(1f).fillMaxWidth(),
+                columns = GridCells.Adaptive(64.dp * LocalDensity.current.fontScale.coerceIn(1f, 2f)), modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -281,22 +283,23 @@ fun EditScreen(
 }
 
 @Composable
-private fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+internal fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val color = category.color.hexToColor()
+    val art = LocalThemeTokens.current.homeLayout != HomeLayout.STANDARD
     val background by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        if (selected) MaterialTheme.colorScheme.primaryContainer else if (LocalThemeTokens.current.ledgerRows) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface,
         label = "categorySelection"
     )
     Surface(
-        onClick = onClick, enabled = enabled, shape = RoundedCornerShape(16.dp), color = background,
+        onClick = onClick, enabled = enabled, shape = RoundedCornerShape(LocalThemeTokens.current.categoryCorner), color = background,
         modifier = Modifier.semantics { this.selected = selected },
         border = if (selected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)
+            Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(vertical = if (art) 8.dp else 12.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(if (art) 4.dp else 6.dp)
         ) {
-            Icon(CategoryIcons.byKey(category.icon), null, Modifier.size(26.dp), tint = if (selected) MaterialTheme.colorScheme.primary else color)
+            Icon(categoryIcon(category.icon), null, Modifier.size(26.dp), tint = if (selected) MaterialTheme.colorScheme.primary else themeCategoryColor(color))
             Text(
                 if (category.isArchived) "${category.name}·归档" else category.name,
                 style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -307,7 +310,7 @@ private fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: B
 }
 
 @Composable
-private fun AmountKeyboard(
+internal fun AmountKeyboard(
     enabled: Boolean,
     date: LocalDate,
     hasNote: Boolean,
@@ -322,6 +325,7 @@ private fun AmountKeyboard(
     onContinueOrClear: () -> Unit,
     onSave: () -> Unit
 ) {
+    val fontScale = LocalDensity.current.fontScale
     val today = LocalDate.now()
     val dateLabel = when (date) {
         today -> "今天"
@@ -334,19 +338,20 @@ private fun AmountKeyboard(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         listOf(listOf("7", "8", "9"), listOf("4", "5", "6"), listOf("1", "2", "3"), listOf(".", "0", "back")).forEachIndexed { index, row ->
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(Modifier.fillMaxWidth().height((34f * fontScale.coerceAtMost(1.5f) + 8f).coerceAtLeast(52f).dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 row.forEach { key ->
                     Surface(
                         onClick = {
                             when (key) { "." -> onDot(); "back" -> onBackspace(); else -> onDigit(key[0]) }
                         },
                         enabled = enabled, modifier = Modifier.weight(1f).heightIn(min = 52.dp).fillMaxHeight(),
-                        color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(LocalThemeTokens.current.keyCorner),
                         contentColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     ) {
                         Box(Modifier.padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
                             if (key == "back") Icon(Icons.AutoMirrored.Filled.Backspace, "退格，删除最后一位", Modifier.size(24.dp))
-                            else Text(key, style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = AmountFontFeatures))
+                            else Text(key, style = readingTextStyle(MaterialTheme.typography.headlineMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif, fontFeatureSettings = AmountFontFeatures,
+                                fontSize = MaterialTheme.typography.headlineMedium.fontSize * (1.5f / fontScale).coerceAtMost(1f))))
                         }
                     }
                 }
@@ -376,15 +381,18 @@ private fun AmountKeyboard(
                     color = if (primary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = (if (primary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer)
                         .copy(alpha = if (enabled) 1f else 0.38f),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(LocalThemeTokens.current.keyCorner)
                 ) {
                     Column(
                         Modifier.padding(horizontal = 2.dp, vertical = 6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
-                        subtitle?.let { Text(it, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+                        if (fontScale <= 1.15f) Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                        else FittedLedgerAmount(label, MaterialTheme.typography.titleSmall.fontSize, Modifier.fillMaxWidth(), TextAlign.Center,
+                            color = LocalContentColor.current, textStyle = MaterialTheme.typography.titleSmall,
+                            minSize = (12f / fontScale).coerceAtMost(10f).sp)
+                        if (fontScale <= 1.15f) subtitle?.let { Text(it, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
                     }
                 }
             }

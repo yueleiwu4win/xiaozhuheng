@@ -8,9 +8,12 @@ import com.example.bookkeeping.data.export.ImportManager
 import com.example.bookkeeping.data.export.PreparedBackup
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_CUSTOM_IMAGE
 import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_DEFAULT
+import com.example.bookkeeping.data.prefs.BACKGROUND_SPEC_ABACUS
 import com.example.bookkeeping.data.prefs.BackgroundImageStore
 import com.example.bookkeeping.data.prefs.SettingsRepository
 import com.example.bookkeeping.data.prefs.ThemeMode
+import com.example.bookkeeping.data.prefs.ThemeStyle
+import com.example.bookkeeping.data.prefs.ReadingOptions
 import com.example.bookkeeping.data.repo.BackupRepository
 import com.example.bookkeeping.data.repo.BillRepository
 import com.example.bookkeeping.data.repo.CategoryRepository
@@ -126,11 +129,30 @@ class SettingsViewModel(
         viewModelScope.launch { settingsRepository.setThemeMode(mode) }
     }
 
+    fun setThemeStyle(style: ThemeStyle) {
+        viewModelScope.launch {
+            try { settingsRepository.setThemeStyle(style) }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { _result.value = ExportResult(false, "主题保存失败，请重试") }
+        }
+    }
+
+    fun setReading(options: ReadingOptions, onSaved: () -> Unit) {
+        if (_busy.value) return
+        _busy.value = true
+        viewModelScope.launch {
+            try { settingsRepository.setReading(options); onSaved() }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { _result.value = ExportResult(false, "阅读设置保存失败，请重试") }
+            finally { _busy.value = false }
+        }
+    }
+
     /** 设置背景预设（key = "default" 或 BackgroundPreset.key）。 */
     fun setBackgroundPreset(key: String) {
         viewModelScope.launch {
-            val spec = if (key == BACKGROUND_SPEC_DEFAULT) {
-                BACKGROUND_SPEC_DEFAULT
+            val spec = if (key == BACKGROUND_SPEC_DEFAULT || key == BACKGROUND_SPEC_ABACUS) {
+                key
             } else {
                 BackgroundPresets.firstOrNull { it.key == key }?.spec() ?: BACKGROUND_SPEC_DEFAULT
             }
