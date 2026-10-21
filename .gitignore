@@ -18,3 +18,16 @@ key.properties
 .env
 .env.*
 .tools/
+*.p12
+*.pfx
+*.pem
+*.key
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.csv
+/backups/
+/exports/
+.codebase-memory/

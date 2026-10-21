@@ -1,5 +1,7 @@
 # 小珠衡（Android 离线记账 App）
 
+项目原创代码采用 [MIT License](LICENSE)，允许使用、修改和再分发，需保留版权及许可声明。字体、Gradle Wrapper、插画和设计参考的许可范围见 [第三方与素材说明](THIRD_PARTY_NOTICES.md)。
+
 纯本地、离线、无账号的个人记账 App。数据只保存在本机 SQLite 数据库，`AndroidManifest`
 刻意**不声明 INTERNET 权限**，从系统层面保证不联网。
 
