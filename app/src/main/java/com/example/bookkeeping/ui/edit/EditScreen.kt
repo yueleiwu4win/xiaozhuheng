@@ -11,9 +11,12 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.outlined.*
@@ -27,10 +30,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,7 +62,6 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun EditScreen(
     onBack: () -> Unit,
-    onManageCategories: (String) -> Unit,
     onSaved: () -> Unit,
     onDeleteBill: (Long) -> Unit,
     deleting: Boolean = false,
@@ -90,10 +92,12 @@ fun EditScreen(
     val snackbar = remember { SnackbarHostState() }
     var showDelete by rememberSaveable { mutableStateOf(false) }
     var showDiscard by rememberSaveable { mutableStateOf(false) }
-    var noteVisible by rememberSaveable { mutableStateOf(false) }
-    var noteDraft by rememberSaveable { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val softwareKeyboard = LocalSoftwareKeyboardController.current
+    val imeInsets = WindowInsets.ime
+    val density = LocalDensity.current
+    val imeVisible by remember(imeInsets, density) { derivedStateOf { imeInsets.getBottom(density) > 0 } }
+    val finishNote = { focusManager.clearFocus(); softwareKeyboard?.hide(); Unit }
     val leavePage: (() -> Unit) -> Unit = { action ->
         if (!leaving) {
             leaving = true
@@ -104,10 +108,11 @@ fun EditScreen(
     }
     val requestBack: () -> Unit = {
         if (!saving && !deleting && !leaving) {
+            finishNote()
             if (viewModel.hasUnsavedChanges()) showDiscard = true else leavePage(onBack)
         }
     }
-    BackHandler { requestBack() }
+    BackHandler { if (imeVisible) finishNote() else requestBack() }
 
     LaunchedEffect(error) {
         error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
@@ -165,36 +170,6 @@ fun EditScreen(
             })
         }
     }
-    if (noteVisible) {
-        val noteFocus = remember { FocusRequester() }
-        val closeNote = {
-            focusManager.clearFocus()
-            softwareKeyboard?.hide()
-            noteVisible = false
-        }
-        val confirmNote = {
-            viewModel.setNote(noteDraft)
-            closeNote()
-        }
-        AlertDialog(
-            onDismissRequest = closeNote,
-            title = { Text("添加备注") },
-            text = {
-                LaunchedEffect(Unit) { noteFocus.requestFocus() }
-                OutlinedTextField(
-                    value = noteDraft, onValueChange = { noteDraft = it.take(50) },
-                    modifier = Modifier.fillMaxWidth().focusRequester(noteFocus),
-                    placeholder = { Text("例如：午餐、交通、工资") }, minLines = 2, maxLines = 3,
-                    supportingText = { Text("${noteDraft.length}/50") },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { confirmNote() }),
-                    shape = RoundedCornerShape(LocalThemeTokens.current.categoryCorner)
-                )
-            },
-            confirmButton = { TextButton(onClick = confirmNote) { Text("完成") } },
-            dismissButton = { TextButton(onClick = closeNote) { Text("取消") } }
-        )
-    }
 
     Scaffold(
         containerColor = if (LocalReadingOptions.current.enhanced) MaterialTheme.colorScheme.background.copy(alpha = 0.95f) else if (LocalThemeTokens.current.ledgerRows) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.surface,
@@ -209,6 +184,7 @@ fun EditScreen(
                     }
                 },
                 actions = {
+                    if (imeVisible) TextButton(onClick = finishNote) { Text("完成") }
                     if (viewModel.isEdit) IconButton(onClick = { if (!leaving) showDelete = true }, enabled = enabled) {
                         Icon(themedIcon(Icons.Filled.DeleteOutline, Icons.Outlined.DeleteOutline), contentDescription = "删除这笔记录", tint = MaterialTheme.colorScheme.error)
                     }
@@ -238,16 +214,15 @@ fun EditScreen(
                         )
                     }
                 }
-                Text("金额", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if (viewModel.input.hasCalculation) display.replace("-", "−") else "金额",
+                    modifier = Modifier.horizontalScroll(rememberScrollState()), maxLines = 1,
+                    style = themeAmountStyle(MaterialTheme.typography.labelMedium), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(currency, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 4.dp))
-                    FittedLedgerAmount(display, if (display.length > 10) 36.sp else 44.sp, Modifier.weight(1f),
+                    val shownAmount = if (viewModel.input.hasCalculation) AmountFormatter.format(viewModel.input.totalCents()) else display
+                    FittedLedgerAmount(shownAmount, if (shownAmount.length > 10) 36.sp else 44.sp, Modifier.weight(1f),
                         color = if (billType == BillType.INCOME) incomeColor else MaterialTheme.colorScheme.primary,
                         textStyle = themeAmountStyle(MaterialTheme.typography.displayMedium))
-                }
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("选择分类", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                    TextButton(onClick = { if (!leaving) onManageCategories(billType) }, enabled = enabled) { Text("管理") }
                 }
             }
             LazyVerticalGrid(
@@ -262,22 +237,24 @@ fun EditScreen(
                     Text("暂无可用分类", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 12.dp))
                 }
             }
-            // 备注使用独立弹窗；底层键盘保持布局，避免弹窗与系统输入法引起整页跳动。
-            AmountKeyboard(
-                enabled = enabled && !noteVisible && !datePickerVisible,
-                date = date, hasNote = note.isNotBlank(), isEdit = viewModel.isEdit,
+            // 金额键盘保留在底部，输入法沿系统动画覆盖/露出，避免销毁后重新创建。
+            EntryNoteRow(note, enabled && !leaving && !datePickerVisible,
+                onValueChange = viewModel::setNote, onDone = finishNote)
+            EntryKeyboardDock(imeVisible) {
+                Column {
+                AmountKeyboard(
+                enabled = enabled && !datePickerVisible,
+                date = date, isEdit = viewModel.isEdit,
                 saving = saving, deleting = deleting,
                 onDigit = { if (!leaving) viewModel.input.digit(it) }, onDot = { if (!leaving) viewModel.input.dot() },
                 onBackspace = { if (!leaving) viewModel.input.backspace() },
                 onDate = { if (!leaving) viewModel.setDatePickerVisible(true) },
-                onNote = { if (!leaving) { noteDraft = note; noteVisible = true } },
-                onContinueOrClear = {
-                    if (!leaving) {
-                        if (viewModel.isEdit) viewModel.input.reset() else viewModel.save(continueEntry = true)
-                    }
-                },
+                onPlus = { if (!leaving) viewModel.input.operator('+') },
+                onMinus = { if (!leaving) viewModel.input.operator('-') },
                 onSave = { if (!leaving) viewModel.save() }
-            )
+                )
+                }
+            }
         }
     }
 }
@@ -310,10 +287,36 @@ internal fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: 
 }
 
 @Composable
+internal fun EntryNoteRow(note: String, enabled: Boolean, onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier, onDone: () -> Unit = {}) {
+    var focused by remember { mutableStateOf(false) }
+    val style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface)
+    val hintColor = MaterialTheme.colorScheme.onSurfaceVariant
+    BasicTextField(value = note, onValueChange = { onValueChange(it.take(50)) }, enabled = enabled,
+        singleLine = true, textStyle = style, cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { onDone() }),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
+            .onFocusChanged { focused = it.isFocused }.semantics { contentDescription = "备注，最多50字" },
+        decorationBox = { innerTextField ->
+            Surface(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), shape = RoundedCornerShape(8.dp)) {
+                Row(Modifier.heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("备注", style = MaterialTheme.typography.bodyMedium)
+                    Box(Modifier.weight(1f)) {
+                        if (note.isEmpty()) Text("直接输入备注", style = style.copy(color = hintColor))
+                        innerTextField()
+                    }
+                    if (focused) Text("${note.length}/50", style = MaterialTheme.typography.labelSmall, color = hintColor)
+                }
+            }
+        })
+}
+
+@Composable
 internal fun AmountKeyboard(
     enabled: Boolean,
     date: LocalDate,
-    hasNote: Boolean,
     isEdit: Boolean,
     saving: Boolean,
     deleting: Boolean,
@@ -321,8 +324,8 @@ internal fun AmountKeyboard(
     onDot: () -> Unit,
     onBackspace: () -> Unit,
     onDate: () -> Unit,
-    onNote: () -> Unit,
-    onContinueOrClear: () -> Unit,
+    onPlus: () -> Unit,
+    onMinus: () -> Unit,
     onSave: () -> Unit
 ) {
     val fontScale = LocalDensity.current.fontScale
@@ -357,25 +360,24 @@ internal fun AmountKeyboard(
                 }
                 val label = when (index) {
                     0 -> dateLabel
-                    1 -> "备注"
-                    2 -> if (isEdit) "清零" else "再记"
+                    1 -> "+"
+                    2 -> "−"
                     else -> if (deleting) "删除中" else if (saving) "保存中" else "保存"
                 }
                 val subtitle = when (index) {
                     0 -> if (date.year != today.year) date.year.toString() else "日期"
-                    1 -> if (hasNote) "已填写" else "选填"
-                    2 -> if (isEdit) "重输金额" else "保存后继续"
-                    else -> if (isEdit) "保存修改" else null
+                    3 -> if (isEdit) "保存修改" else null
+                    else -> null
                 }
                 val description = when (index) {
                     0 -> "选择日期，当前为${date.format(DateTimeFormatter.ISO_LOCAL_DATE)}"
-                    1 -> if (hasNote) "编辑备注，已填写" else "添加备注"
-                    2 -> if (isEdit) "清空当前金额，重新输入" else "保存并再记"
+                    1 -> "加上下一项金额"
+                    2 -> "减去下一项金额"
                     else -> if (isEdit) "保存修改" else "保存"
                 }
                 val primary = index == 3
                 Surface(
-                    onClick = when (index) { 0 -> onDate; 1 -> onNote; 2 -> onContinueOrClear; else -> onSave },
+                    onClick = when (index) { 0 -> onDate; 1 -> onPlus; 2 -> onMinus; else -> onSave },
                     enabled = enabled,
                     modifier = Modifier.weight(1f).heightIn(min = 52.dp).fillMaxHeight().semantics { contentDescription = description },
                     color = if (primary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
@@ -388,7 +390,10 @@ internal fun AmountKeyboard(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        if (fontScale <= 1.15f) Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                        if (index == 1 || index == 2) Text(label, style = MaterialTheme.typography.headlineMedium.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                            fontSize = MaterialTheme.typography.headlineMedium.fontSize * (1.5f / fontScale).coerceAtMost(1f)), maxLines = 1)
+                        else if (fontScale <= 1.15f) Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
                         else FittedLedgerAmount(label, MaterialTheme.typography.titleSmall.fontSize, Modifier.fillMaxWidth(), TextAlign.Center,
                             color = LocalContentColor.current, textStyle = MaterialTheme.typography.titleSmall,
                             minSize = (12f / fontScale).coerceAtMost(10f).sp)

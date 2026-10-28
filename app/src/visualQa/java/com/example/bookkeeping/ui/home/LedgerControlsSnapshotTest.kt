@@ -17,6 +17,7 @@ import com.example.bookkeeping.data.prefs.ThemeStyle
 import com.example.bookkeeping.data.prefs.*
 import com.example.bookkeeping.ui.common.*
 import com.example.bookkeeping.ui.edit.AmountKeyboard
+import com.example.bookkeeping.ui.edit.EntryNoteRow
 import com.example.bookkeeping.ui.edit.CategoryCell
 import com.example.bookkeeping.ui.settings.SettingRow
 import com.example.bookkeeping.ui.theme.BookkeepingTheme
@@ -62,7 +63,8 @@ class LedgerControlsSnapshotTest {
                             }
                         }
                     }
-                    AmountKeyboard(true, LocalDate.now(), false, false, false, false, {}, {}, {}, {}, {}, {}, {})
+                    EntryNoteRow("", true, {})
+                    AmountKeyboard(true, LocalDate.of(2026, 10, 28), false, false, false, {}, {}, {}, {}, {}, {}, {})
                 }
             }
         }
