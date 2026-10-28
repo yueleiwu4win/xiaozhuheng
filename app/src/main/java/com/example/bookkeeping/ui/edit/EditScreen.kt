@@ -94,7 +94,9 @@ fun EditScreen(
     var showDiscard by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val softwareKeyboard = LocalSoftwareKeyboardController.current
-    val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val imeInsets = WindowInsets.ime
+    val density = LocalDensity.current
+    val imeVisible by remember(imeInsets, density) { derivedStateOf { imeInsets.getBottom(density) > 0 } }
     val finishNote = { focusManager.clearFocus(); softwareKeyboard?.hide(); Unit }
     val leavePage: (() -> Unit) -> Unit = { action ->
         if (!leaving) {
@@ -197,7 +199,7 @@ fun EditScreen(
             }
             return@Scaffold
         }
-        Column(Modifier.padding(padding).consumeWindowInsets(padding).imePadding().fillMaxSize()) {
+        Column(Modifier.padding(padding).consumeWindowInsets(padding).fillMaxSize()) {
             // 金额与类型固定在上方，只有分类列表滚动。
             Column(
                 Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
@@ -235,10 +237,12 @@ fun EditScreen(
                     Text("暂无可用分类", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 12.dp))
                 }
             }
-            // 系统输入法出现时让出金额键盘区域，备注仍贴在输入法上方。
+            // 金额键盘保留在底部，输入法沿系统动画覆盖/露出，避免销毁后重新创建。
             EntryNoteRow(note, enabled && !leaving && !datePickerVisible,
                 onValueChange = viewModel::setNote, onDone = finishNote)
-            if (!imeVisible) AmountKeyboard(
+            EntryKeyboardDock(imeVisible) {
+                Column {
+                AmountKeyboard(
                 enabled = enabled && !datePickerVisible,
                 date = date, isEdit = viewModel.isEdit,
                 saving = saving, deleting = deleting,
@@ -248,7 +252,9 @@ fun EditScreen(
                 onPlus = { if (!leaving) viewModel.input.operator('+') },
                 onMinus = { if (!leaving) viewModel.input.operator('-') },
                 onSave = { if (!leaving) viewModel.save() }
-            )
+                )
+                }
+            }
         }
     }
 }
