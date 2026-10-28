@@ -41,16 +41,17 @@ class AppContainer(app: Application) {
     private var startupJob: Job? = null
 
     val database: AppDatabase =
-        Room.databaseBuilder(app, AppDatabase::class.java, AppDatabase.NAME).build()
+        Room.databaseBuilder(app, AppDatabase::class.java, AppDatabase.NAME).addMigrations(AppDatabase.MIGRATION_1_2).build()
 
     val categoryDao: CategoryDao = database.categoryDao()
     val billDao: BillDao = database.billDao()
 
     val categoryRepository = CategoryRepository(categoryDao)
     val billRepository = BillRepository(billDao)
+    val budgetRepository = com.example.bookkeeping.data.repo.BudgetRepository(database.budgetDao())
     val backupRepository = BackupRepository(database)
     val settingsRepository = SettingsRepository(app, scope)
-    val exportManager by lazy { ExportManager(app) }
+    val exportManager by lazy { ExportManager(app, database) }
     val importManager by lazy { ImportManager(app, backupRepository, settingsRepository) }
     val backgroundImageStore by lazy { BackgroundImageStore(app) }
 

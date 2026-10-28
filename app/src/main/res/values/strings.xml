@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">小珠衡</string>
+    <string name="shortcut_expense">记支出</string>
+    <string name="shortcut_income">记收入</string>
 </resources>

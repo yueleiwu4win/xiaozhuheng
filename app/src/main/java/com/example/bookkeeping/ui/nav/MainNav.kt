@@ -53,7 +53,7 @@ private const val ROUTE_HOME = "home"
 private const val ROUTE_STATS = "stats"
 private const val ROUTE_ME = "me"
 private const val ROUTE_CATEGORY = "category?type={type}"
-private const val ROUTE_EDIT = "edit?billId={billId}"
+private const val ROUTE_EDIT = "edit?billId={billId}&initialType={initialType}&quick={quick}"
 
 private fun navigateTab(route: String, navController: NavHostController) {
     navController.navigate(route) {
@@ -64,7 +64,7 @@ private fun navigateTab(route: String, navController: NavHostController) {
 }
 
 @Composable
-fun MainNav() {
+fun MainNav(quickType: String? = null, onQuickConsumed: () -> Unit = {}) {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route
@@ -72,6 +72,27 @@ fun MainNav() {
     val message by homeViewModel.message.collectAsStateWithLifecycle()
     val deleting by homeViewModel.deleting.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    var quickConfirm by remember { mutableStateOf(false) }
+    fun openQuick() {
+        if (currentRoute == ROUTE_EDIT) navController.popBackStack()
+        navController.navigate("edit?billId=-1&initialType=$quickType&quick=true") { launchSingleTop = true }
+        onQuickConsumed()
+    }
+    LaunchedEffect(quickType, currentRoute) {
+        if (quickType != null && currentRoute != null) {
+            if (currentRoute == ROUTE_EDIT) {
+                val editing = androidx.lifecycle.ViewModelProvider(navController.currentBackStackEntry!!, AppViewModelProvider.Factory)[com.example.bookkeeping.ui.edit.EditViewModel::class.java]
+                if (editing.saving.value || deleting) onQuickConsumed()
+                else if (editing.hasUnsavedChanges()) quickConfirm = true else openQuick()
+            } else openQuick()
+        }
+    }
+    if (quickConfirm && quickType != null) AlertDialog(
+        onDismissRequest = { quickConfirm = false; onQuickConsumed() },
+        title = { Text("打开快捷记账？") }, text = { Text("当前记账页尚未关闭，继续会放弃该页未保存的内容。") },
+        confirmButton = { TextButton({ quickConfirm = false; openQuick() }) { Text("继续") } },
+        dismissButton = { TextButton({ quickConfirm = false; onQuickConsumed() }) { Text("留在当前页") } }
+    )
     val mainPage = currentRoute in listOf(ROUTE_HOME, ROUTE_STATS, ROUTE_ME)
 
     LaunchedEffect(message) {
@@ -95,13 +116,13 @@ fun MainNav() {
                     MainPageScaffold(ROUTE_HOME, navController, snackbar) {
                         HomeScreen(
                             onEditBill = { navController.navigate("edit?billId=${it ?: -1L}") },
-                            viewModel = homeViewModel
+                            onOpenBudget = { navController.navigate("budget?month=$it") }, viewModel = homeViewModel
                         )
                     }
                 }
                 composable(ROUTE_STATS) {
                     MainPageScaffold(ROUTE_STATS, navController, snackbar) {
-                        StatsScreen(onOpenCategory = { id, type, year, month ->
+                        StatsScreen(onOpenSummary = { navController.navigate("monthly-summary?month=$it") }, onOpenCategory = { id, type, year, month ->
                             navController.navigate("category-bills?categoryId=$id&type=$type&year=$year&month=${month ?: -1}")
                         })
                     }
@@ -109,8 +130,15 @@ fun MainNav() {
                 composable(ROUTE_ME) {
                     MainPageScaffold(ROUTE_ME, navController, snackbar) {
                         SettingsScreen(onOpenCategories = { navController.navigate("category?type=expense") },
-                            onOpenReading = { navController.navigate("reading") { launchSingleTop = true } })
+                            onOpenReading = { navController.navigate("reading") { launchSingleTop = true } },
+                            onOpenBudget = { navController.navigate("budget?month=${java.time.YearMonth.now()}") })
                     }
+                }
+                composable("budget?month={month}", arguments = listOf(navArgument("month") { defaultValue = java.time.YearMonth.now().toString() })) { entry ->
+                    com.example.bookkeeping.ui.budget.BudgetScreen(java.time.YearMonth.parse(entry.arguments?.getString("month"))) { navController.popBackStack() }
+                }
+                composable("monthly-summary?month={month}", arguments = listOf(navArgument("month") { defaultValue = java.time.YearMonth.now().toString() })) { entry ->
+                    com.example.bookkeeping.ui.summary.MonthlySummaryScreen(java.time.YearMonth.parse(entry.arguments?.getString("month"))) { navController.popBackStack() }
                 }
                 composable("reading") {
                     ReadingSettingsScreen(onBack = { navController.popBackStack() })
@@ -126,16 +154,16 @@ fun MainNav() {
                 }
                 composable(
                     route = ROUTE_EDIT,
-                    arguments = listOf(navArgument("billId") { type = NavType.LongType; defaultValue = -1L }),
+                    arguments = listOf(navArgument("billId") { type = NavType.LongType; defaultValue = -1L }, navArgument("initialType") { defaultValue = "expense" }, navArgument("quick") { type = NavType.BoolType; defaultValue = false }),
                     // 与主标签一样直接切换，避免淡出时两层页面重叠。
                     enterTransition = { EnterTransition.None },
                     exitTransition = { ExitTransition.None },
                     popEnterTransition = { EnterTransition.None },
                     popExitTransition = { ExitTransition.None }
-                ) {
+                ) { editEntry ->
                     EditScreen(
                         onBack = { navController.popBackStack() },
-                        onSaved = { navController.popBackStack() },
+                        onSaved = { if (editEntry.arguments?.getBoolean("quick") == true) navController.popBackStack(ROUTE_HOME, false) else navController.popBackStack() },
                         onDeleteBill = { id ->
                             homeViewModel.deleteBill(id) {
                                 val entry = navController.currentBackStackEntry

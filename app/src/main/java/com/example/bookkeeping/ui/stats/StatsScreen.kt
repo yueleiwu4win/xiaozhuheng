@@ -39,6 +39,7 @@ import java.util.Locale
 @Composable
 fun StatsScreen(
     onOpenCategory: (Long, String, Int, Int?) -> Unit,
+    onOpenSummary: (YearMonth) -> Unit = {},
     viewModel: StatsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val selection by viewModel.selection.collectAsStateWithLifecycle()
@@ -128,6 +129,7 @@ fun StatsScreen(
                         }
                     }
                     if (!annualVisible && monthData != null) {
+                        item { OutlinedButton({ onOpenSummary(selection.month) }, Modifier.fillMaxWidth()) { Text("查看月度小结") } }
                         item {
                             SectionCard("当月${label}") {
                                 Text(AmountFormatter.withSymbol(monthData.total, currency),

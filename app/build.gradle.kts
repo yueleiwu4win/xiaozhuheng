@@ -25,8 +25,9 @@ android {
         applicationId = "com.example.bookkeeping"
         minSdk = 26
         targetSdk = 34
-        versionCode = 15
-        versionName = "1.1.10"
+        versionCode = 16
+        versionName = "1.2.0"
+        testInstrumentationRunner = "com.example.bookkeeping.MigrationInstrumentation"
     }
 
     buildTypes {
@@ -59,6 +60,7 @@ android {
     if (project.hasProperty("visualQa")) {
         sourceSets.getByName("test").java.srcDir("src/visualQa/java")
     }
+    sourceSets.getByName("androidTest").assets.srcDir("schemas")
 
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -75,6 +77,7 @@ tasks.register<Copy>("packageXiaozhuheng") {
 
 kapt {
     correctErrorTypes = true
+    arguments { arg("room.schemaLocation", "$projectDir/schemas") }
 }
 
 dependencies {

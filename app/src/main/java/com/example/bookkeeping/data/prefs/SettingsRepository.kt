@@ -70,6 +70,8 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
     val settings = _settings.asStateFlow()
     private val _lastUsed = MutableStateFlow(LastUsed(null, null))
     val lastUsed = _lastUsed.asStateFlow()
+    private val _lastIncomeCategory = MutableStateFlow<Long?>(null)
+    val lastIncomeCategory = _lastIncomeCategory.asStateFlow()
     private val loaded = CompletableDeferred<Unit>()
 
     /** 设置流；DataStore 文件损坏/读失败时回落默认值，避免启动崩溃。 */
@@ -90,6 +92,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
                             ReadingFont.from(p[KEY_READING_FONT]), p[KEY_BG_STRENGTH] ?: 100, p[KEY_READING_ENHANCED] ?: false).normalized()
                     )
                     _lastUsed.value = LastUsed(p[KEY_LAST_CATEGORY], p[KEY_LAST_DATE])
+                    _lastIncomeCategory.value = p[KEY_LAST_INCOME]
                     loaded.complete(Unit)
                 }
             } catch (e: CancellationException) {
@@ -151,7 +154,13 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         _lastUsed.value = LastUsed(categoryId, date)
     }
 
+    suspend fun setLastIncomeCategory(id: Long) {
+        context.dataStore.edit { it[KEY_LAST_INCOME] = id }
+        _lastIncomeCategory.value = id
+    }
+
     private companion object {
+        val KEY_LAST_INCOME = longPreferencesKey("last_income_category_id")
         val KEY_CURRENCY = stringPreferencesKey("currency")
         val KEY_WEEK = booleanPreferencesKey("week_start_monday")
         val KEY_THEME = stringPreferencesKey("theme_mode")

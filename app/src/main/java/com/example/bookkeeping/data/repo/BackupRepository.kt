@@ -13,20 +13,23 @@ import com.example.bookkeeping.data.db.entity.CategoryEntity
  */
 class BackupRepository(private val db: AppDatabase) {
 
-    suspend fun restoreAll(categories: List<CategoryEntity>, bills: List<BillEntity>) {
+    suspend fun restoreAll(categories: List<CategoryEntity>, bills: List<BillEntity>, budgets: List<com.example.bookkeeping.data.db.entity.MonthlyBudget> = emptyList()) {
         require(categories.map { it.id }.toSet().size == categories.size) { "备份中的分类 id 有重复" }
         require(bills.map { it.id }.toSet().size == bills.size) { "备份中的账单 id 有重复" }
         db.withTransaction {
+            db.budgetDao().deleteAll()
             db.billDao().deleteAll()
             db.categoryDao().deleteAllCategories()
             db.categoryDao().insertAll(categories)
             db.billDao().insertAll(bills)
+            budgets.forEach { db.budgetDao().put(it) }
         }
     }
 
     /** 清空全部账单并重建内置分类（单事务）。 */
     suspend fun clearAllData(defaultCategories: List<CategoryEntity>) {
         db.withTransaction {
+            db.budgetDao().deleteAll()
             db.billDao().deleteAll()
             db.categoryDao().deleteAllCategories()
             db.categoryDao().insertAll(defaultCategories)

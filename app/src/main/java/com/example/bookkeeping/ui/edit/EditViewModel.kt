@@ -23,7 +23,7 @@ class EditViewModel(
     val billId: Long = savedStateHandle.get<Long>("billId") ?: -1L
     val isEdit: Boolean get() = billId > 0
     val input = AmountInputState()
-    private val _billType = MutableStateFlow(BillType.EXPENSE)
+    private val _billType = MutableStateFlow(savedStateHandle.get<String>("initialType")?.takeIf { it in listOf(BillType.INCOME, BillType.EXPENSE) } ?: BillType.EXPENSE)
     val billType = _billType.asStateFlow()
     val allCategories = categoryRepository.cachedCategories
     private val _selectedCategory = MutableStateFlow<CategoryEntity?>(null)
@@ -52,7 +52,7 @@ class EditViewModel(
         val cached = allCategories.value
         if (!isEdit && cached != null) {
             // 启动已准备好基础数据，新记账在构造时一次完成初始表单。
-            _selectedCategory.value = chooseActiveCategory(cached, BillType.EXPENSE, settingsRepository.lastUsed.value.categoryId)
+            _selectedCategory.value = chooseActiveCategory(cached, _billType.value, initialCategory())
             baseline = currentDraft()
             _ready.value = true
         } else {
@@ -68,7 +68,7 @@ class EditViewModel(
                         _date.value = LocalDate.parse(b.bill.date)
                         _note.value = b.bill.note ?: ""
                     } else {
-                        _selectedCategory.value = chooseActiveCategory(all, BillType.EXPENSE, settingsRepository.lastUsed.value.categoryId)
+                        _selectedCategory.value = chooseActiveCategory(all, _billType.value, initialCategory())
                     }
                     baseline = currentDraft()
                     _ready.value = true
@@ -93,6 +93,8 @@ class EditViewModel(
                 }
         }
     }
+
+    private fun initialCategory() = if (_billType.value == BillType.INCOME) settingsRepository.lastIncomeCategory.value else settingsRepository.lastUsed.value.categoryId
 
     private fun currentDraft() = EditDraft(
         input.totalCents(), _selectedCategory.value?.id, _billType.value, _date.value, _note.value
@@ -140,9 +142,10 @@ class EditViewModel(
                     billRepository.create(draft.amountCents, draft.categoryId, draft.date, draft.type, draft.note, currency)
                 }
                 // 分类偏好写入失败不应把已保存账单报告成失败，避免用户重复记账。
-                if (!isEdit && draft.type == BillType.EXPENSE) {
+                if (!isEdit) {
                     try {
-                        settingsRepository.setLastUsed(draft.categoryId, DateUtils.format(draft.date))
+                        if (draft.type == BillType.INCOME) settingsRepository.setLastIncomeCategory(draft.categoryId)
+                        else settingsRepository.setLastUsed(draft.categoryId, DateUtils.format(draft.date))
                     } catch (e: CancellationException) { throw e } catch (_: Exception) { }
                 }
                 if (continueEntry && !isEdit) {
