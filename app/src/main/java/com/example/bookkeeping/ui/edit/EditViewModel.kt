@@ -98,7 +98,7 @@ class EditViewModel(
         input.totalCents(), _selectedCategory.value?.id, _billType.value, _date.value, _note.value
     )
 
-    fun hasUnsavedChanges(): Boolean = baseline?.let { currentDraft().differsFrom(it) } ?: false
+    fun hasUnsavedChanges(): Boolean = baseline?.let { !input.isComplete || currentDraft().differsFrom(it) } ?: false
 
     fun selectType(type: String) {
         if (!_ready.value || _saving.value || type !in listOf(BillType.EXPENSE, BillType.INCOME) || type == _billType.value) return
@@ -128,6 +128,7 @@ class EditViewModel(
         val draft = currentDraft()
         if (draft.categoryId == null) { _error.value = "请选择分类"; return }
         if (_selectedCategory.value?.type != draft.type) { _error.value = "请选择对应的收支分类"; return }
+        input.validationError()?.let { _error.value = it; return }
         if (draft.amountCents <= 0) { _error.value = "请输入大于 0 的金额"; return }
         _saving.value = true
         val currency = settings.value.currency

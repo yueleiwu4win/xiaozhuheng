@@ -135,7 +135,6 @@ fun MainNav() {
                 ) {
                     EditScreen(
                         onBack = { navController.popBackStack() },
-                        onManageCategories = { type -> navController.navigate("category?type=$type") },
                         onSaved = { navController.popBackStack() },
                         onDeleteBill = { id ->
                             homeViewModel.deleteBill(id) {

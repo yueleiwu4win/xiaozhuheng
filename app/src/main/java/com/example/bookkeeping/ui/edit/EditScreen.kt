@@ -11,6 +11,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,7 +61,6 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun EditScreen(
     onBack: () -> Unit,
-    onManageCategories: (String) -> Unit,
     onSaved: () -> Unit,
     onDeleteBill: (Long) -> Unit,
     deleting: Boolean = false,
@@ -238,16 +239,15 @@ fun EditScreen(
                         )
                     }
                 }
-                Text("金额", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if (viewModel.input.hasCalculation) display.replace("-", "−") else "金额",
+                    modifier = Modifier.horizontalScroll(rememberScrollState()), maxLines = 1,
+                    style = themeAmountStyle(MaterialTheme.typography.labelMedium), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(currency, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 4.dp))
-                    FittedLedgerAmount(display, if (display.length > 10) 36.sp else 44.sp, Modifier.weight(1f),
+                    val shownAmount = if (viewModel.input.hasCalculation) AmountFormatter.format(viewModel.input.totalCents()) else display
+                    FittedLedgerAmount(shownAmount, if (shownAmount.length > 10) 36.sp else 44.sp, Modifier.weight(1f),
                         color = if (billType == BillType.INCOME) incomeColor else MaterialTheme.colorScheme.primary,
                         textStyle = themeAmountStyle(MaterialTheme.typography.displayMedium))
-                }
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("选择分类", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                    TextButton(onClick = { if (!leaving) onManageCategories(billType) }, enabled = enabled) { Text("管理") }
                 }
             }
             LazyVerticalGrid(
@@ -263,19 +263,16 @@ fun EditScreen(
                 }
             }
             // 备注使用独立弹窗；底层键盘保持布局，避免弹窗与系统输入法引起整页跳动。
+            EntryNoteRow(note, enabled && !leaving && !noteVisible && !datePickerVisible) { noteDraft = note; noteVisible = true }
             AmountKeyboard(
                 enabled = enabled && !noteVisible && !datePickerVisible,
-                date = date, hasNote = note.isNotBlank(), isEdit = viewModel.isEdit,
+                date = date, isEdit = viewModel.isEdit,
                 saving = saving, deleting = deleting,
                 onDigit = { if (!leaving) viewModel.input.digit(it) }, onDot = { if (!leaving) viewModel.input.dot() },
                 onBackspace = { if (!leaving) viewModel.input.backspace() },
                 onDate = { if (!leaving) viewModel.setDatePickerVisible(true) },
-                onNote = { if (!leaving) { noteDraft = note; noteVisible = true } },
-                onContinueOrClear = {
-                    if (!leaving) {
-                        if (viewModel.isEdit) viewModel.input.reset() else viewModel.save(continueEntry = true)
-                    }
-                },
+                onPlus = { if (!leaving) viewModel.input.operator('+') },
+                onMinus = { if (!leaving) viewModel.input.operator('-') },
                 onSave = { if (!leaving) viewModel.save() }
             )
         }
@@ -310,10 +307,25 @@ internal fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: 
 }
 
 @Composable
+internal fun EntryNoteRow(note: String, enabled: Boolean, onClick: () -> Unit) {
+    Surface(onClick = onClick, enabled = enabled, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(8.dp)) {
+        Row(Modifier.heightIn(min = 44.dp).padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("备注", style = MaterialTheme.typography.bodyMedium)
+            Text(note.ifBlank { "点击填写备注" }, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium,
+                color = if (note.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Icon(Icons.Outlined.Edit, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
 internal fun AmountKeyboard(
     enabled: Boolean,
     date: LocalDate,
-    hasNote: Boolean,
     isEdit: Boolean,
     saving: Boolean,
     deleting: Boolean,
@@ -321,8 +333,8 @@ internal fun AmountKeyboard(
     onDot: () -> Unit,
     onBackspace: () -> Unit,
     onDate: () -> Unit,
-    onNote: () -> Unit,
-    onContinueOrClear: () -> Unit,
+    onPlus: () -> Unit,
+    onMinus: () -> Unit,
     onSave: () -> Unit
 ) {
     val fontScale = LocalDensity.current.fontScale
@@ -357,25 +369,24 @@ internal fun AmountKeyboard(
                 }
                 val label = when (index) {
                     0 -> dateLabel
-                    1 -> "备注"
-                    2 -> if (isEdit) "清零" else "再记"
+                    1 -> "+"
+                    2 -> "−"
                     else -> if (deleting) "删除中" else if (saving) "保存中" else "保存"
                 }
                 val subtitle = when (index) {
                     0 -> if (date.year != today.year) date.year.toString() else "日期"
-                    1 -> if (hasNote) "已填写" else "选填"
-                    2 -> if (isEdit) "重输金额" else "保存后继续"
-                    else -> if (isEdit) "保存修改" else null
+                    3 -> if (isEdit) "保存修改" else null
+                    else -> null
                 }
                 val description = when (index) {
                     0 -> "选择日期，当前为${date.format(DateTimeFormatter.ISO_LOCAL_DATE)}"
-                    1 -> if (hasNote) "编辑备注，已填写" else "添加备注"
-                    2 -> if (isEdit) "清空当前金额，重新输入" else "保存并再记"
+                    1 -> "加上下一项金额"
+                    2 -> "减去下一项金额"
                     else -> if (isEdit) "保存修改" else "保存"
                 }
                 val primary = index == 3
                 Surface(
-                    onClick = when (index) { 0 -> onDate; 1 -> onNote; 2 -> onContinueOrClear; else -> onSave },
+                    onClick = when (index) { 0 -> onDate; 1 -> onPlus; 2 -> onMinus; else -> onSave },
                     enabled = enabled,
                     modifier = Modifier.weight(1f).heightIn(min = 52.dp).fillMaxHeight().semantics { contentDescription = description },
                     color = if (primary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
@@ -388,7 +399,10 @@ internal fun AmountKeyboard(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        if (fontScale <= 1.15f) Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                        if (index == 1 || index == 2) Text(label, style = MaterialTheme.typography.headlineMedium.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
+                            fontSize = MaterialTheme.typography.headlineMedium.fontSize * (1.5f / fontScale).coerceAtMost(1f)), maxLines = 1)
+                        else if (fontScale <= 1.15f) Text(label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
                         else FittedLedgerAmount(label, MaterialTheme.typography.titleSmall.fontSize, Modifier.fillMaxWidth(), TextAlign.Center,
                             color = LocalContentColor.current, textStyle = MaterialTheme.typography.titleSmall,
                             minSize = (12f / fontScale).coerceAtMost(10f).sp)

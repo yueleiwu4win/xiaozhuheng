@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 import com.example.bookkeeping.ui.edit.AmountKeyboard
+import com.example.bookkeeping.ui.edit.EntryNoteRow
 import androidx.compose.ui.platform.LocalDensity
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
@@ -77,7 +78,8 @@ class ReadingSettingsSnapshotTest {
                         androidx.compose.material3.Text("记一笔", Modifier.padding(12.dp), style = MaterialTheme.typography.titleLarge)
                         FittedLedgerAmount("¥99,999,999.99", 36.sp, Modifier.fillMaxWidth().padding(16.dp))
                         Spacer(Modifier.weight(1f))
-                        AmountKeyboard(true, LocalDate.of(2026, 10, 14), false, false, false, false, {}, {}, {}, {}, {}, {}, {})
+                        EntryNoteRow("超市购物，多个商品合计", true) {}
+                        AmountKeyboard(true, LocalDate.of(2026, 10, 14), false, false, false, {}, {}, {}, {}, {}, {}, {})
                     }
                 }
             }

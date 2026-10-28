@@ -1,86 +1,80 @@
 package com.example.bookkeeping.ui.edit
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.util.Locale
 
-/**
- * 金额键盘输入状态机（纯逻辑，便于测试）。
- *
- * 只负责单一正数金额的输入；支出 / 收入由页面的类型切换决定，
- * 金额一律按正数存储，展示层不显示负号。
- */
+/** 仅支持加减的金额算式，逐项按整数分计算；保存时仍写入一个正数金额。 */
 class AmountInputState {
-
     companion object {
-        const val MAX_INTEGER_DIGITS = 8 // 8 位整数 = 上限 99,999,999.99
+        const val MAX_INTEGER_DIGITS = 8
         const val MAX_DECIMAL_DIGITS = 2
+        const val MAX_CENTS = 9_999_999_999L
+        private const val MAX_EXPRESSION_LENGTH = 160
     }
-
     private val _display = MutableStateFlow("0")
-    val display: StateFlow<String> = _display.asStateFlow()
-
-    private var current: String = "0"
+    val display = _display.asStateFlow()
+    private var current = "0"
+    private fun lastTermStart() = current.indexOfLast { it == '+' || it == '-' } + 1
+    val hasCalculation: Boolean get() = current.any { it == '+' || it == '-' }
+    val isComplete: Boolean get() = current.last() != '+' && current.last() != '-'
 
     fun digit(d: Char) {
-        if (!d.isDigit()) return
-        val intPart = if (current.contains('.')) current.substringBefore('.') else current
-        if (intPart.length >= MAX_INTEGER_DIGITS && !current.contains('.')) return
-        if (current.contains('.')) {
-            val decimals = current.substringAfter('.').length
-            if (decimals >= MAX_DECIMAL_DIGITS) return
-        }
-        current = if (current == "0") d.toString() else current + d
+        if (d !in '0'..'9' || current.length >= MAX_EXPRESSION_LENGTH) return
+        val start = lastTermStart()
+        val term = current.substring(start)
+        if (!term.contains('.') && term.length >= MAX_INTEGER_DIGITS) return
+        if (term.contains('.') && term.substringAfter('.').length >= MAX_DECIMAL_DIGITS) return
+        current = if (term == "0") current.substring(0, start) + d else current + d
         publish()
     }
-
     fun dot() {
-        if (current.contains('.')) return
-        current += "."
+        if (current.length >= MAX_EXPRESSION_LENGTH - 1) return
+        val term = current.substring(lastTermStart())
+        if (term.contains('.')) return
+        current += if (term.isEmpty()) "0." else "."
         publish()
     }
-
-    fun backspace() {
-        if (current.length <= 1) {
-            current = "0"
-        } else {
-            current = current.dropLast(1)
+    fun operator(op: Char) {
+        if (op != '+' && op != '-') return
+        if (!isComplete) current = current.dropLast(1) + op
+        else {
+            if (current.length >= MAX_EXPRESSION_LENGTH - 1) return
+            current += op
         }
         publish()
     }
-
-    /** 当前金额（分）。 */
-    fun totalCents(): Long = parseCents(current)
-
-    /** 编辑模式：恢复一个已有金额。 */
+    fun backspace() {
+        current = current.dropLast(1).ifEmpty { "0" }
+        publish()
+    }
+    /** 未完成的末尾运算符只用于预览；保存前必须通过validationError校验。 */
+    fun totalCents(): Long {
+        var sum = 0L
+        var sign = 1
+        var start = 0
+        for (i in current.indices) {
+            if (current[i] == '+' || current[i] == '-') {
+                sum += sign * parseCents(current.substring(start, i))
+                sign = if (current[i] == '+') 1 else -1
+                start = i + 1
+            }
+        }
+        return sum + sign * parseCents(current.substring(start))
+    }
+    fun validationError(): String? = when {
+        !isComplete -> "请补全加减算式"
+        totalCents() <= 0 -> "金额计算结果必须大于0"
+        totalCents() > MAX_CENTS -> "金额不能超过99,999,999.99"
+        else -> null
+    }
     fun restore(cents: Long) {
+        require(cents in 0..MAX_CENTS)
         current = String.format(Locale.US, "%d.%02d", cents / 100, cents % 100)
         publish()
     }
-
-    /** 保存成功后重置（分类与日期由调用方保留，便于连续记账）。 */
-    fun reset() {
-        current = "0"
-        publish()
-    }
-
-    private fun publish() {
-        _display.value = current
-    }
-
-    private fun parseCents(s: String): Long {
-        if (s.isEmpty() || s == "0") return 0
-        val normalized = if (s.endsWith(".")) s + "0" else s
-        return try {
-            BigDecimal(normalized)
-                .movePointRight(2)
-                .setScale(0, RoundingMode.HALF_UP)
-                .toLong()
-        } catch (e: NumberFormatException) {
-            0
-        }
-    }
+    fun reset() { current = "0"; publish() }
+    private fun publish() { _display.value = current }
+    private fun parseCents(s: String): Long = if (s.isEmpty()) 0 else BigDecimal(s).movePointRight(2).longValueExact()
 }

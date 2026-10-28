@@ -25,8 +25,8 @@ android {
         applicationId = "com.example.bookkeeping"
         minSdk = 26
         targetSdk = 34
-        versionCode = 12
-        versionName = "1.1.7"
+        versionCode = 13
+        versionName = "1.1.8"
     }
 
     buildTypes {
