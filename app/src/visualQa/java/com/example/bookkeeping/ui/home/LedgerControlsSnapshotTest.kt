@@ -63,7 +63,7 @@ class LedgerControlsSnapshotTest {
                             }
                         }
                     }
-                    EntryNoteRow("", true) {}
+                    EntryNoteRow("", true, {})
                     AmountKeyboard(true, LocalDate.of(2026, 10, 28), false, false, false, {}, {}, {}, {}, {}, {}, {})
                 }
             }

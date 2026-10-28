@@ -78,7 +78,7 @@ class ReadingSettingsSnapshotTest {
                         androidx.compose.material3.Text("记一笔", Modifier.padding(12.dp), style = MaterialTheme.typography.titleLarge)
                         FittedLedgerAmount("¥99,999,999.99", 36.sp, Modifier.fillMaxWidth().padding(16.dp))
                         Spacer(Modifier.weight(1f))
-                        EntryNoteRow("超市购物，多个商品合计", true) {}
+                        EntryNoteRow("超市购物，多个商品合计", true, {})
                         AmountKeyboard(true, LocalDate.of(2026, 10, 14), false, false, false, {}, {}, {}, {}, {}, {}, {})
                     }
                 }

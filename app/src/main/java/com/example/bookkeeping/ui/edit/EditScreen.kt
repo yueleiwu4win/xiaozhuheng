@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.outlined.*
@@ -29,10 +30,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -91,10 +92,10 @@ fun EditScreen(
     val snackbar = remember { SnackbarHostState() }
     var showDelete by rememberSaveable { mutableStateOf(false) }
     var showDiscard by rememberSaveable { mutableStateOf(false) }
-    var noteVisible by rememberSaveable { mutableStateOf(false) }
-    var noteDraft by rememberSaveable { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val softwareKeyboard = LocalSoftwareKeyboardController.current
+    val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val finishNote = { focusManager.clearFocus(); softwareKeyboard?.hide(); Unit }
     val leavePage: (() -> Unit) -> Unit = { action ->
         if (!leaving) {
             leaving = true
@@ -105,10 +106,11 @@ fun EditScreen(
     }
     val requestBack: () -> Unit = {
         if (!saving && !deleting && !leaving) {
+            finishNote()
             if (viewModel.hasUnsavedChanges()) showDiscard = true else leavePage(onBack)
         }
     }
-    BackHandler { requestBack() }
+    BackHandler { if (imeVisible) finishNote() else requestBack() }
 
     LaunchedEffect(error) {
         error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
@@ -166,36 +168,6 @@ fun EditScreen(
             })
         }
     }
-    if (noteVisible) {
-        val noteFocus = remember { FocusRequester() }
-        val closeNote = {
-            focusManager.clearFocus()
-            softwareKeyboard?.hide()
-            noteVisible = false
-        }
-        val confirmNote = {
-            viewModel.setNote(noteDraft)
-            closeNote()
-        }
-        AlertDialog(
-            onDismissRequest = closeNote,
-            title = { Text("添加备注") },
-            text = {
-                LaunchedEffect(Unit) { noteFocus.requestFocus() }
-                OutlinedTextField(
-                    value = noteDraft, onValueChange = { noteDraft = it.take(50) },
-                    modifier = Modifier.fillMaxWidth().focusRequester(noteFocus),
-                    placeholder = { Text("例如：午餐、交通、工资") }, minLines = 2, maxLines = 3,
-                    supportingText = { Text("${noteDraft.length}/50") },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { confirmNote() }),
-                    shape = RoundedCornerShape(LocalThemeTokens.current.categoryCorner)
-                )
-            },
-            confirmButton = { TextButton(onClick = confirmNote) { Text("完成") } },
-            dismissButton = { TextButton(onClick = closeNote) { Text("取消") } }
-        )
-    }
 
     Scaffold(
         containerColor = if (LocalReadingOptions.current.enhanced) MaterialTheme.colorScheme.background.copy(alpha = 0.95f) else if (LocalThemeTokens.current.ledgerRows) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.surface,
@@ -210,6 +182,7 @@ fun EditScreen(
                     }
                 },
                 actions = {
+                    if (imeVisible) TextButton(onClick = finishNote) { Text("完成") }
                     if (viewModel.isEdit) IconButton(onClick = { if (!leaving) showDelete = true }, enabled = enabled) {
                         Icon(themedIcon(Icons.Filled.DeleteOutline, Icons.Outlined.DeleteOutline), contentDescription = "删除这笔记录", tint = MaterialTheme.colorScheme.error)
                     }
@@ -224,7 +197,7 @@ fun EditScreen(
             }
             return@Scaffold
         }
-        Column(Modifier.padding(padding).consumeWindowInsets(padding).fillMaxSize()) {
+        Column(Modifier.padding(padding).consumeWindowInsets(padding).imePadding().fillMaxSize()) {
             // 金额与类型固定在上方，只有分类列表滚动。
             Column(
                 Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
@@ -262,10 +235,11 @@ fun EditScreen(
                     Text("暂无可用分类", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 12.dp))
                 }
             }
-            // 备注使用独立弹窗；底层键盘保持布局，避免弹窗与系统输入法引起整页跳动。
-            EntryNoteRow(note, enabled && !leaving && !noteVisible && !datePickerVisible) { noteDraft = note; noteVisible = true }
-            AmountKeyboard(
-                enabled = enabled && !noteVisible && !datePickerVisible,
+            // 系统输入法出现时让出金额键盘区域，备注仍贴在输入法上方。
+            EntryNoteRow(note, enabled && !leaving && !datePickerVisible,
+                onValueChange = viewModel::setNote, onDone = finishNote)
+            if (!imeVisible) AmountKeyboard(
+                enabled = enabled && !datePickerVisible,
                 date = date, isEdit = viewModel.isEdit,
                 saving = saving, deleting = deleting,
                 onDigit = { if (!leaving) viewModel.input.digit(it) }, onDot = { if (!leaving) viewModel.input.dot() },
@@ -307,19 +281,30 @@ internal fun CategoryCell(category: CategoryEntity, selected: Boolean, enabled: 
 }
 
 @Composable
-internal fun EntryNoteRow(note: String, enabled: Boolean, onClick: () -> Unit) {
-    Surface(onClick = onClick, enabled = enabled, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(8.dp)) {
-        Row(Modifier.heightIn(min = 44.dp).padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("备注", style = MaterialTheme.typography.bodyMedium)
-            Text(note.ifBlank { "点击填写备注" }, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium,
-                color = if (note.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Icon(Icons.Outlined.Edit, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
+internal fun EntryNoteRow(note: String, enabled: Boolean, onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier, onDone: () -> Unit = {}) {
+    var focused by remember { mutableStateOf(false) }
+    val style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface)
+    val hintColor = MaterialTheme.colorScheme.onSurfaceVariant
+    BasicTextField(value = note, onValueChange = { onValueChange(it.take(50)) }, enabled = enabled,
+        singleLine = true, textStyle = style, cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { onDone() }),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
+            .onFocusChanged { focused = it.isFocused }.semantics { contentDescription = "备注，最多50字" },
+        decorationBox = { innerTextField ->
+            Surface(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), shape = RoundedCornerShape(8.dp)) {
+                Row(Modifier.heightIn(min = 48.dp).padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("备注", style = MaterialTheme.typography.bodyMedium)
+                    Box(Modifier.weight(1f)) {
+                        if (note.isEmpty()) Text("直接输入备注", style = style.copy(color = hintColor))
+                        innerTextField()
+                    }
+                    if (focused) Text("${note.length}/50", style = MaterialTheme.typography.labelSmall, color = hintColor)
+                }
+            }
+        })
 }
 
 @Composable
