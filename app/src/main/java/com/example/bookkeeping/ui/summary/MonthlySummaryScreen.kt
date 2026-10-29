@@ -47,7 +47,20 @@ fun MonthlySummaryScreen(month: YearMonth, onBack: () -> Unit) {
     var hidden by rememberSaveable { mutableStateOf(false) }
     var artwork by rememberSaveable { mutableStateOf(false) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var busy by remember { mutableStateOf(false) }
+    var working by remember { mutableStateOf(false) }
+    var posterName by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingSaveName by rememberSaveable { mutableStateOf<String?>(null) }
+    val busy = working || pendingSaveName != null || (posterName != null && bitmap == null)
+    val store = remember(context.cacheDir) { PosterFileStore(File(context.cacheDir, "export")) }
+    LaunchedEffect(posterName) {
+        bitmap = null
+        posterName?.let { name ->
+            try {
+                bitmap = withContext(Dispatchers.IO) { BitmapFactory.decodeFile(store.resolve(name).absolutePath) ?: error("图片不可用") }
+            } catch (e: CancellationException) { throw e }
+            catch (_: Exception) { error = "海报文件已丢失，请重新生成"; posterName = null }
+        }
+    }
     val colors = MaterialTheme.colorScheme
     val background = colors.background.toArgb(); val foreground = colors.onBackground.toArgb(); val accent = colors.primary.toArgb()
     val settings by container.settingsRepository.settings.collectAsStateWithLifecycle()
@@ -59,14 +72,17 @@ fun MonthlySummaryScreen(month: YearMonth, onBack: () -> Unit) {
         catch (e: CancellationException) { throw e } catch (_: Exception) { error = "小结读取失败，请重试" }
     }
     val saveLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/png")) { uri ->
-        if (uri != null && bitmap != null) {
-            val snapshot = bitmap!!
-            scope.launch {
-                busy = true
-                try { withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri, "wt")?.use { check(snapshot.compress(Bitmap.CompressFormat.PNG, 100, it)) } ?: error("无法写入") } }
-                catch (e: CancellationException) { throw e } catch (_: Exception) { error = "图片保存失败，请重试" }
-                finally { busy = false }
-            }
+        val sourceName = pendingSaveName
+        // Consume before asynchronous copying: recreation after result delivery must
+        // not restore a pending request whose ActivityResult was already consumed.
+        pendingSaveName = null
+        if (uri != null) scope.launch {
+            working = true
+            try {
+                withContext(Dispatchers.IO) { store.copyTo(sourceName) { context.contentResolver.openOutputStream(uri, "wt") } }
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { error = "图片保存失败：${e.message ?: "请重新生成后重试"}" }
+            finally { working = false }
         }
     }
     fun preparePoster() {
@@ -76,43 +92,49 @@ fun MonthlySummaryScreen(month: YearMonth, onBack: () -> Unit) {
         val useSerif = settings.reading.font.value == "serif" || (settings.reading.font.value == "theme" && style.value != "classic")
         val lines = SummaryPoster.lines(data, currency, hidden)
         val includeArtwork = artwork
-        busy = true
+        working = true
         scope.launch {
             try {
-                bitmap = withContext(Dispatchers.Default) {
+                posterName = withContext(Dispatchers.Default) {
                     val base = if (useSerif) ResourcesCompat.getFont(context, if (settings.reading.weight.value == "medium") R.font.ledger_medium else R.font.ledger_text) ?: Typeface.DEFAULT else Typeface.DEFAULT
                     val font = if (settings.reading.weight.value == "bold") Typeface.create(base, Typeface.BOLD) else base
                     val image = if (includeArtwork) BitmapFactory.decodeResource(context.resources, R.drawable.background_abacus) else null
-                    try { SummaryPoster.render(lines, background, foreground, accent, font, image) } finally { image?.recycle() }
+                    try {
+                        val rendered = SummaryPoster.render(lines, background, foreground, accent, font, image)
+                        try { withContext(Dispatchers.IO) { store.write { rendered.compress(Bitmap.CompressFormat.PNG, 100, it) } } }
+                        finally { rendered.recycle() }
+                    } finally { image?.recycle() }
                 }
             } catch (e: CancellationException) { throw e } catch (_: Exception) { error = "图片生成失败，请重试" }
-            finally { busy = false }
+            finally { working = false }
         }
     }
-    bitmap?.let { preview ->
-        Dialog(onDismissRequest = { if (!busy) bitmap = null }) {
+    bitmap?.takeIf { posterName != null }?.let { preview ->
+        Dialog(onDismissRequest = { if (!busy) { bitmap = null; posterName = null } }) {
             Surface(shape = MaterialTheme.shapes.large) {
                 Column(Modifier.fillMaxWidth().heightIn(max = 640.dp).padding(12.dp)) {
                     Text("分享预览", style = MaterialTheme.typography.titleMedium)
                     Box(Modifier.weight(1f).verticalScroll(rememberScrollState())) { Image(preview.asImageBitmap(), "完整月度小结预览", Modifier.fillMaxWidth().aspectRatio(preview.width.toFloat() / preview.height)) }
-                    Button({ saveLauncher.launch("小珠衡-${month}-月度小结.png") }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("保存图片") }
+                    Button({
+                        try {
+                            store.resolve(posterName)
+                            pendingSaveName = posterName
+                            saveLauncher.launch("小珠衡-${month}-月度小结.png")
+                        } catch (e: Exception) { pendingSaveName = null; error = "无法保存：${e.message}" }
+                    }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("保存图片") }
                     OutlinedButton({
                         if (!busy) scope.launch {
-                            busy = true
+                            working = true
                             try {
-                                val file = withContext(Dispatchers.IO) {
-                                    val dir = File(context.cacheDir, "export").apply { mkdirs() }
-                                    dir.listFiles()?.filter { it.name.startsWith("summary-") && it.lastModified() < System.currentTimeMillis() - 86400000 }?.forEach { it.delete() }
-                                    File(dir, "summary-${month}-${System.currentTimeMillis()}.png").also { f -> f.outputStream().use { check(preview.compress(Bitmap.CompressFormat.PNG, 100, it)) } }
-                                }
+                                val file = withContext(Dispatchers.IO) { store.resolve(posterName) }
                                 val uri = container.exportManager.shareUriFor(file)
                                 val intent = Intent(Intent.ACTION_SEND).apply { type = "image/png"; putExtra(Intent.EXTRA_STREAM, uri); clipData = ClipData.newRawUri("月度小结", uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }
                                 context.startActivity(Intent.createChooser(intent, "分享月度小结"))
                             } catch (e: CancellationException) { throw e } catch (_: Exception) { error = "分享失败，请重试" }
-                            finally { busy = false }
+                            finally { working = false }
                         }
                     }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("分享图片") }
-                    TextButton({ bitmap = null }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("关闭") }
+                    TextButton({ bitmap = null; posterName = null }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("关闭") }
                     error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 }
             }
@@ -124,8 +146,8 @@ fun MonthlySummaryScreen(month: YearMonth, onBack: () -> Unit) {
             error?.let { Text(it, color = colors.error); TextButton({ retry++ }) { Text("重试") } }
             summary?.let { data ->
                 SummaryContent(data, currency, hidden)
-                Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Text("隐藏金额", Modifier.weight(1f)); Switch(hidden, { hidden = it }) }
-                Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Text("海报添加淡人物背景", Modifier.weight(1f)); Switch(artwork, { artwork = it }) }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Text("隐藏金额", Modifier.weight(1f)); Switch(hidden, { hidden = it }, enabled = !busy) }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Text("海报添加淡人物背景", Modifier.weight(1f)); Switch(artwork, { artwork = it }, enabled = !busy) }
                 Button({ preparePoster() }, enabled = !busy && data.count > 0, modifier = Modifier.fillMaxWidth()) { Text(if (busy) "正在生成…" else "生成分享图片") }
             }
         }
