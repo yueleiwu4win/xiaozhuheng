@@ -14,7 +14,8 @@ data class BackupSettings(val currency: String?, val weekStartMonday: Boolean?, 
 data class PreparedBackup(
     val fileName: String, val version: Int, val exportedAt: Long?,
     val categories: List<CategoryEntity>, val bills: List<BillEntity>, val settings: BackupSettings?,
-    val skippedCategories: Int, val skippedBills: Int
+    val skippedCategories: Int, val skippedBills: Int,
+    val budgets: List<com.example.bookkeeping.data.db.entity.MonthlyBudget> = emptyList()
 ) {
     val firstDate: String? = bills.minOfOrNull { it.date }
     val lastDate: String? = bills.maxOfOrNull { it.date }
@@ -25,7 +26,7 @@ object BackupParser {
     fun parse(text: String, fileName: String = "所选备份"): PreparedBackup {
         val root = JSONObject(text)
         val version = root.optInt("formatVersion", 0)
-        require(version in 1..2 && root.optString("app") == "bookkeeping-android") { "不是有效的记账备份文件" }
+        require(version in 1..3 && root.optString("app") == "bookkeeping-android") { "不是有效的记账备份文件" }
         val catArray = root.optJSONArray("categories") ?: error("备份缺少分类数据")
         val cats = mutableListOf<CategoryEntity>()
         val categoryTypes = mutableMapOf<Long, String>()
@@ -93,7 +94,20 @@ object BackupParser {
                 it.optJSONObject("reading")?.toReadingOptions()
             )
         }
+        val budgets = mutableListOf<com.example.bookkeeping.data.db.entity.MonthlyBudget>()
+        if (version >= 3) {
+            val a = root.getJSONArray("budgets")
+            val months = mutableSetOf<String>()
+            for (i in 0 until a.length()) {
+                val o = a.getJSONObject(i)
+                val month = o.getString("month")
+                require(java.time.YearMonth.parse(month).toString() == month && months.add(month)) { "预算月份无效或重复" }
+                val cents = BigDecimal(o.get("amountCents").toString()).longValueExact()
+                require(cents in 1..MAX_AMOUNT_CENTS) { "预算金额无效" }
+                budgets += com.example.bookkeeping.data.db.entity.MonthlyBudget(month, cents, o.getLong("updatedAt").also { require(it > 0) })
+            }
+        }
         return PreparedBackup(fileName, version, root.optLong("exportedAt", 0).takeIf { it > 0 },
-            cats.toList(), normalized, settings, skippedCats, skippedBills)
+            cats.toList(), normalized, settings, skippedCats, skippedBills, budgets)
     }
 }

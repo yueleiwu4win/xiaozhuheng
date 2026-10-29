@@ -63,7 +63,7 @@ internal fun InkGoldHomeContent(
     onKeyword: (String) -> Unit, onFilters: () -> Unit,
     onPrevious: () -> Unit, onNext: () -> Unit, onChooseMonth: () -> Unit, onCurrentMonth: () -> Unit,
     onCategory: (Long?) -> Unit, onReset: () -> Unit, onCreate: () -> Unit,
-    today: LocalDate, billContent: @Composable (BillWithCategory) -> Unit
+    today: LocalDate, budgetContent: @Composable () -> Unit = {}, billContent: @Composable (BillWithCategory) -> Unit
 ) {
     // 整个账页可以滚动，横屏/大字体下不会由固定头部挤没账单。
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -77,6 +77,7 @@ internal fun InkGoldHomeContent(
                 if (yearMonth != YearMonth.from(today)) item("currentMonth") {
                     TextButton(onCurrentMonth) { Text("回到本月") }
                 }
+                item("budget") { Box(Modifier.padding(horizontal = 4.dp)) { budgetContent() } }
                 item("categories") { InkGoldCategories(categories, filter, onCategory) }
                 if (filter.isActive) item("filterSummary") {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

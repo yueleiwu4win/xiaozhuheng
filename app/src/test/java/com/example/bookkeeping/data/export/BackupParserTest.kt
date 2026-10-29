@@ -6,6 +6,20 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BackupParserTest {
+    private fun budget(month: String = "2026-10", amount: Any = 500000L) = JSONObject().put("month", month).put("amountCents", amount).put("updatedAt", 1L)
+    @Test fun version3KeepsBudgetsAndLegacyHasNone() {
+        val parsed = BackupParser.parse(backup(version = 3).put("budgets", JSONArray().put(budget())).toString())
+        assertEquals(500000L, parsed.budgets.single().amountCents)
+        assertEquals("2026-10", parsed.budgets.single().month)
+        assertTrue(BackupParser.parse(backup().toString()).budgets.isEmpty())
+    }
+    @Test fun invalidBudgetNeverPartiallyRestoresBackup() {
+        listOf(budget("2026-13"), budget(amount = "0.5"), budget(amount = -1), budget(amount = "999999999999999999999")).forEach {
+            assertTrue(runCatching { BackupParser.parse(backup(version = 3).put("budgets", JSONArray().put(it)).toString()) }.isFailure)
+        }
+        assertTrue(runCatching { BackupParser.parse(backup(version = 3).put("budgets", JSONArray().put(budget()).put(budget())).toString()) }.isFailure)
+        assertTrue(runCatching { BackupParser.parse(backup(version = 3).toString()) }.isFailure)
+    }
     @Test fun newThemeSettingSurvivesBackupParsingWithoutChangingBills() {
         val root = backup().put("settings", JSONObject().put("themeStyle", "song").put("themeMode", "dark"))
         val parsed = BackupParser.parse(root.toString())
@@ -102,6 +116,6 @@ class BackupParserTest {
     }
 
     @Test(expected = IllegalArgumentException::class) fun futureVersionsAreRejected() {
-        BackupParser.parse(backup(version = 3).toString())
+        BackupParser.parse(backup(version = 4).toString())
     }
 }

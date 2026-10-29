@@ -25,10 +25,20 @@ import com.example.bookkeeping.ui.theme.BookkeepingTheme
 import com.example.bookkeeping.ui.theme.isDark
 
 class MainActivity : ComponentActivity() {
+    private var quickType by mutableStateOf<String?>(null)
+    private fun acceptQuick(intent: android.content.Intent) {
+        quickType = when (intent.action) { "com.example.bookkeeping.QUICK_EXPENSE" -> "expense"; "com.example.bookkeeping.QUICK_INCOME" -> "income"; else -> null }
+    }
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        acceptQuick(intent)
+    }
     private var startupPreDrawListener: ViewTreeObserver.OnPreDrawListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) acceptQuick(intent) else quickType = savedInstanceState.getString("pendingQuick")
         val activityStarted = SystemClock.elapsedRealtime()
         val container = (application as BookkeepingApp).container
         // 只使用系统的图标启动窗口；不再叠加应用内全屏封面。
@@ -41,7 +51,7 @@ class MainActivity : ComponentActivity() {
         }
 
         var firstContentPrepared = false
-        val minimumVisibleUntil = if (savedInstanceState == null) activityStarted + 600L else activityStarted
+        val minimumVisibleUntil = if (savedInstanceState == null && quickType == null) activityStarted + 600L else activityStarted
         val decor = window.decorView
         val preDrawListener = object : ViewTreeObserver.OnPreDrawListener {
             override fun onPreDraw(): Boolean {
@@ -79,7 +89,7 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(LocalBackgroundSpec provides settings.background) {
                     BookkeepingTheme(theme, settings.themeStyle, settings.reading) {
                         if (startup.ready) {
-                            MainNav()
+                            MainNav(quickType) { quickType = null; intent.action = android.content.Intent.ACTION_MAIN }
                             SideEffect { firstContentPrepared = true }
                         } else {
                             // 正常准备阶段被系统启动窗口遮住；读取失败时可放行重试界面。
@@ -98,6 +108,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("pendingQuick", quickType)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroy() {

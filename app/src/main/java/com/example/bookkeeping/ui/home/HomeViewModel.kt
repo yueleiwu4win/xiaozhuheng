@@ -25,7 +25,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 class HomeViewModel(
     private val billRepository: BillRepository,
     private val categoryRepository: CategoryRepository,
-    settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository,
+    private val budgetRepository: com.example.bookkeeping.data.repo.BudgetRepository
 ) : ViewModel() {
 
     private val _yearMonth = MutableStateFlow(YearMonth.now())
@@ -71,6 +72,8 @@ class HomeViewModel(
             summarizeBills(billRepository.monthSnapshot(_yearMonth.value))
         )
 
+    val budget = _yearMonth.flatMapLatest { ym -> budgetRepository.observe(ym).map { ym to it } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val settings = settingsRepository.settings
 
     fun prevMonth() {

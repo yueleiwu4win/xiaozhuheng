@@ -70,18 +70,19 @@ internal fun LedgerHomeContent(
     categories: List<com.example.bookkeeping.data.db.entity.CategoryEntity> = emptyList(),
     onCategory: (Long?) -> Unit = {},
     onKeyword: (String) -> Unit = {},
+    budgetContent: @Composable () -> Unit = {},
     billContent: @Composable (BillWithCategory) -> Unit
 ) {
     if (LocalThemeTokens.current.homeLayout == HomeLayout.SONG) {
         SongHomeContent(yearMonth, rows, summary, filteredSummary, filter, categoryName, currency, searchVisible,
             onSearch, onFilters, searchContent, onPreviousMonth, onNextMonth, onChooseMonth, onCurrentMonth,
-            onType, onClearCategory, onReset, onCreate, today, billContent)
+            onType, onClearCategory, onReset, onCreate, today, budgetContent, billContent)
         return
     }
     if (LocalThemeTokens.current.homeLayout == HomeLayout.INK_GOLD) {
         InkGoldHomeContent(yearMonth, rows, summary, filteredSummary, filter, categories, currency,
             onKeyword, onFilters, onPreviousMonth, onNextMonth, onChooseMonth, onCurrentMonth,
-            onCategory, onReset, onCreate, today, billContent)
+            onCategory, onReset, onCreate, today, budgetContent, billContent)
         return
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -100,6 +101,7 @@ internal fun LedgerHomeContent(
                     TextButton(onClick = onCurrentMonth) { Text("回到本月") }
                 }
             }
+            item(key = "budget") { budgetContent() }
             item(key = "types") {
                 CeladonTypeBar(filter.type, onType, Modifier.padding(top = 10.dp))
             }

@@ -1,6 +1,7 @@
 package com.example.bookkeeping.data.export
 
 import android.content.Context
+import androidx.room.withTransaction
 import androidx.core.content.FileProvider
 import com.example.bookkeeping.data.db.BillWithCategory
 import com.example.bookkeeping.data.db.entity.BillEntity
@@ -19,10 +20,10 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 数据导出：CSV（Excel 可直接打开）与 JSON（完整备份，formatVersion = 2）。
+ * 数据导出：CSV（Excel 可直接打开）与 JSON（完整备份，formatVersion = 3，含预算）。
  * 全部为本地文件操作，不涉及网络。
  */
-class ExportManager(private val context: Context) {
+class ExportManager(private val context: Context, private val database: com.example.bookkeeping.data.db.AppDatabase) {
 
     enum class Kind { CSV, JSON }
 
@@ -175,13 +176,16 @@ class ExportManager(private val context: Context) {
         return bills.size
     }
 
-    private fun buildJson(
+    private suspend fun buildJson(
         categories: List<CategoryEntity>,
         bills: List<BillWithCategory>,
         settings: AppSettings
     ): String {
+        val snapshot = database.withTransaction {
+            Triple(database.categoryDao().listAll(), database.billDao().allWithCategory(), database.budgetDao().all())
+        }
         val catArr = org.json.JSONArray()
-        for (c in categories) {
+        for (c in snapshot.first) {
             catArr.put(
                 JSONObject()
                     .put("id", c.id)
@@ -199,7 +203,7 @@ class ExportManager(private val context: Context) {
         val billArr = org.json.JSONArray()
         var totalExpense = 0L
         var totalIncome = 0L
-        for (b in bills) {
+        for (b in snapshot.second) {
             val bill = b.bill
             if (bill.type == "expense") totalExpense += bill.amountCents else totalIncome += bill.amountCents
             billArr.put(
@@ -220,7 +224,8 @@ class ExportManager(private val context: Context) {
         }
 
         return JSONObject()
-            .put("formatVersion", 2)
+            .put("formatVersion", 3)
+            .put("budgets", org.json.JSONArray().apply { snapshot.third.forEach { put(JSONObject().put("month", it.month).put("amountCents", it.amountCents).put("updatedAt", it.updatedAt)) } })
             .put("app", "bookkeeping-android")
             .put("exportedAt", Date().time)
             .put("settings", settings.toBackupJson())
@@ -229,7 +234,7 @@ class ExportManager(private val context: Context) {
             .put(
                 "summary",
                 JSONObject()
-                    .put("billCount", bills.size)
+                    .put("billCount", snapshot.second.size)
                     .put("totalExpense", totalExpense / 100.0)
                     .put("totalIncome", totalIncome / 100.0)
             )

@@ -52,7 +52,7 @@ internal fun SongHomeContent(
     onSearch: () -> Unit, onFilters: () -> Unit, searchContent: @Composable () -> Unit,
     onPrevious: () -> Unit, onNext: () -> Unit, onChooseMonth: () -> Unit, onCurrentMonth: () -> Unit,
     onType: (String?) -> Unit, onClearCategory: () -> Unit, onReset: () -> Unit, onCreate: () -> Unit,
-    today: LocalDate, billContent: @Composable (BillWithCategory) -> Unit
+    today: LocalDate, budgetContent: @Composable () -> Unit = {}, billContent: @Composable (BillWithCategory) -> Unit
 ) {
     // 头部与账目一起滚动，横屏和大字号下始终能到达全部内容。
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 12.dp)) {
@@ -64,7 +64,8 @@ internal fun SongHomeContent(
         if (month != YearMonth.from(today)) item("currentMonth") {
             TextButton(onCurrentMonth, Modifier.padding(horizontal = 16.dp)) { Text("回到本月") }
         }
-        item("types") { SongTypeBar(filter.type, onType) }
+        item("budget") { Box(Modifier.padding(horizontal = 4.dp)) { budgetContent() } }
+                item("types") { SongTypeBar(filter.type, onType) }
         if (filter.isActive) item("filtered") {
             Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 6.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

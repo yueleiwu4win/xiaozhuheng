@@ -63,16 +63,21 @@ private const val SWIPE_REVEAL_DP = 84
 @Composable
 fun HomeScreen(
     onEditBill: (Long?) -> Unit,
+    onOpenBudget: (java.time.YearMonth) -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val yearMonth by viewModel.yearMonth.collectAsStateWithLifecycle()
     val bills by viewModel.bills.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     val summary by viewModel.monthSummary.collectAsStateWithLifecycle()
+    val budgetState by viewModel.budget.collectAsStateWithLifecycle()
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val deleting by viewModel.deleting.collectAsStateWithLifecycle()
     val currency = AmountFormatter.symbolOf(settings.currency)
+    val budgetContent: @Composable () -> Unit = {
+        com.example.bookkeeping.ui.budget.BudgetStrip(budgetState?.takeIf { it.first == yearMonth }?.second?.amountCents, summary.expenseCents, currency) { onOpenBudget(yearMonth) }
+    }
     val tokens = LocalThemeTokens.current
     val centeredOverview = tokens.overviewStyle == OverviewStyle.JADE
     val headlineColor = if (tokens.neutralHeadline) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
@@ -174,7 +179,7 @@ fun HomeScreen(
             onType = viewModel::setTypeFilter, onClearCategory = { viewModel.setCategoryFilter(null) },
             onReset = viewModel::resetFilters, onCreate = { onEditBill(null) },
             categories = categories, onCategory = viewModel::setLedgerCategoryFilter,
-            onKeyword = viewModel::setKeyword
+            onKeyword = viewModel::setKeyword, budgetContent = budgetContent
         ) { item ->
             SwipeToRevealRow(item, currency, incomeColor, revealedBillId == item.bill.id,
                 onRevealedChange = { open -> revealedBillId = if (open) item.bill.id else 0L },
@@ -269,6 +274,7 @@ fun HomeScreen(
                     }
                 }
             }
+            item(key = "budget") { budgetContent() }
             item(key = "types") {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 12.dp)) {
                     TypeFilters(filter.type, viewModel::setTypeFilter)

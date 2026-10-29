@@ -21,7 +21,8 @@ object AppViewModelProvider {
             HomeViewModel(
                 app().container.billRepository,
                 app().container.categoryRepository,
-                app().container.settingsRepository
+                app().container.settingsRepository,
+                app().container.budgetRepository
             )
         }
         initializer {

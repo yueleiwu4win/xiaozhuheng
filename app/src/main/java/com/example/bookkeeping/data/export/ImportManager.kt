@@ -30,7 +30,7 @@ class ImportManager(
 
     suspend fun restore(backup: PreparedBackup): ImportResult = withContext(Dispatchers.IO) {
         try {
-            backupRepository.restoreAll(backup.categories, backup.bills)
+            backupRepository.restoreAll(backup.categories, backup.bills, backup.budgets)
         } catch (e: CancellationException) { throw e
         } catch (e: Exception) { return@withContext ImportResult(false, "恢复失败，原数据已保留：${e.message ?: "请重试"}") }
         // 数据库提交后，设置失败单独说明，避免误报整个恢复失败。

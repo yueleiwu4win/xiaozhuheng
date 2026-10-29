@@ -38,7 +38,7 @@ private val CURRENCIES = linkedMapOf("CNY" to "人民币 ¥", "USD" to "美元 $
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onOpenCategories: () -> Unit, onOpenReading: () -> Unit, viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)) {
+fun SettingsScreen(onOpenCategories: () -> Unit, onOpenReading: () -> Unit, onOpenBudget: () -> Unit = {}, viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val billCount by viewModel.billCount.collectAsStateWithLifecycle()
     val cacheSize by viewModel.cacheSizeBytes.collectAsStateWithLifecycle()
@@ -105,7 +105,8 @@ fun SettingsScreen(onOpenCategories: () -> Unit, onOpenReading: () -> Unit, view
                     }
                 }
                 item {
-                    SectionCard("分类") {
+                    SectionCard("记账") {
+                        SettingRow("月度预算", Icons.Outlined.AccountBalanceWallet, subtitle = "按月设置支出额度", enabled = !busy, onClick = onOpenBudget)
                         SettingRow("分类管理", themedIcon(Icons.Filled.Category, Icons.Outlined.Category), subtitle = "收入与支出分类、排序、归档", enabled = !busy, onClick = onOpenCategories)
                     }
                 }
@@ -125,7 +126,7 @@ fun SettingsScreen(onOpenCategories: () -> Unit, onOpenReading: () -> Unit, view
                 }
                 item {
                     SectionCard("高级") {
-                        SettingRow("清空所有数据", themedIcon(Icons.Filled.DeleteOutline, Icons.Outlined.DeleteOutline), subtitle = "删除全部账单，恢复内置分类",
+                        SettingRow("清空所有数据", themedIcon(Icons.Filled.DeleteOutline, Icons.Outlined.DeleteOutline), subtitle = "删除全部账单与预算，恢复内置分类",
                             enabled = !busy, danger = true) { clearVisible = true }
                     }
                 }
@@ -189,7 +190,8 @@ fun SettingsScreen(onOpenCategories: () -> Unit, onOpenReading: () -> Unit, view
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(backup.fileName, style = MaterialTheme.typography.titleSmall)
                     backup.exportedAt?.let { Text("备份时间：${SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.CHINA).format(Date(it))}") }
-                    Text("可恢复：${backup.bills.size} 笔账单、${backup.categories.size} 个分类")
+                    Text("可恢复：${backup.bills.size} 笔账单、${backup.categories.size} 个分类、${backup.budgets.size} 个月预算")
+                    Text(if (backup.version < 3) "旧备份不含预算，恢复后当前预算将清空。" else "将替换当前全部预算。")
                     Text("日期范围：${backup.firstDate ?: "无账单"}${backup.lastDate?.let { " 至 $it" } ?: ""}")
                     Text(if (backup.settings == null) "此备份不含设置，将保留当前设置。" else "将恢复备份中的设置；缺失的相册背景图使用默认背景。")
                     if (backup.skippedBills + backup.skippedCategories > 0) Text(
@@ -218,7 +220,7 @@ fun SettingsScreen(onOpenCategories: () -> Unit, onOpenReading: () -> Unit, view
         confirmLabel = "清理", destructive = false, onConfirm = { cleanVisible = false; viewModel.clearCache() }, onDismiss = { cleanVisible = false }
     )
     if (clearVisible) ConfirmDialog(
-        title = "清空所有数据？", text = "将删除全部 $billCount 笔账单，并恢复内置分类。此操作无法撤销，请先备份数据。",
+        title = "清空所有数据？", text = "将删除全部 $billCount 笔账单与全部预算，并恢复内置分类。此操作无法撤销，请先备份数据。",
         confirmLabel = "清空", onConfirm = { clearVisible = false; viewModel.clearAll() }, onDismiss = { clearVisible = false }
     )
 }

@@ -139,6 +139,17 @@ interface BillDao {
     @Query("SELECT COUNT(*) FROM bill")
     fun observeCount(): Flow<Long>
 
+    @Query("SELECT IFNULL(SUM(amount_cents), 0) FROM bill WHERE type = :type AND date BETWEEN :start AND :end")
+    suspend fun totalBetween(type: String, start: String, end: String): Long
+    @Query("SELECT COUNT(*) FROM bill WHERE date BETWEEN :start AND :end")
+    suspend fun countBetween(start: String, end: String): Long
+    @Transaction
+    @Query("SELECT * FROM bill WHERE type = 'expense' AND date BETWEEN :start AND :end ORDER BY amount_cents DESC, date DESC, id DESC LIMIT 1")
+    suspend fun largestBetween(start: String, end: String): BillWithCategory?
+
+    @Query("SELECT b.category_id AS categoryId, c.name AS name, c.icon AS icon, c.color AS color, SUM(b.amount_cents) AS totalCents, COUNT(*) AS cnt FROM bill b JOIN category c ON c.id = b.category_id WHERE b.type = 'expense' AND b.date BETWEEN :start AND :end GROUP BY b.category_id ORDER BY totalCents DESC, b.category_id ASC")
+    suspend fun categoriesBetween(start: String, end: String): List<CategoryTotal>
+
     // ---------- 导出 ----------
 
     @Transaction
